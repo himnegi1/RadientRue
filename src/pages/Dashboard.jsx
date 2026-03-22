@@ -422,10 +422,10 @@ function EmptyState() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 max-w-sm text-center">
-        <div className="text-5xl mb-5">💇</div>
-        <h2 className="font-serif text-xl text-zinc-100 mb-2">Welcome to Radiant Rue</h2>
+        <div className="text-5xl mb-5">📊</div>
+        <h2 className="font-serif text-xl text-zinc-100 mb-2">Welcome to BizReport</h2>
         <p className="text-zinc-500 text-sm mb-6 leading-relaxed">
-          Import your WhatsApp staff chat and HDFC bank statement to populate the dashboard.
+          Import your WhatsApp staff chat and bank statement to populate the dashboard.
         </p>
         <Link
           to="/import"
@@ -436,7 +436,7 @@ function EmptyState() {
         <div className="mt-6 grid grid-cols-3 gap-2 text-left">
           {[
             ['📱', 'Chat',  'Export .txt from WhatsApp'],
-            ['🏦', 'Bank',  'HDFC PDF or CSV'],
+            ['🏦', 'Bank',  'Bank PDF or CSV'],
             ['📊', 'Stats', 'Live dashboard instantly'],
           ].map(([icon, title, desc]) => (
             <div key={title} className="bg-zinc-800/50 rounded-lg p-3">

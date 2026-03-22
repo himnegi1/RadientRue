@@ -1,5 +1,5 @@
 /**
- * WhatsApp chat export parser for Radiant Rue salon.
+ * WhatsApp chat export parser.
  *
  * Handles format: [DD/MM/YY, HH:MM:SS AM/PM] ~ SenderName: message
  *

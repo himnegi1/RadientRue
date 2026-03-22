@@ -1,5 +1,5 @@
 /**
- * HDFC bank statement PDF extractor.
+ * Bank statement PDF extractor.
  *
  * Uses PDF.js to extract positioned text items, reconstructs table rows
  * by grouping items that share the same y-coordinate, then maps amounts
@@ -18,7 +18,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
 const DATE_RE   = /^\d{1,2}\/\d{1,2}\/\d{2,4}$/
 const AMOUNT_RE = /^[\d,]+\.\d{2}$/
 
-export async function parseHDFCPDF(file) {
+export async function parseBankPDF(file) {
   const arrayBuffer = await file.arrayBuffer()
 
   const pdf = await pdfjsLib

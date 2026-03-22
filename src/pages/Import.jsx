@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { Upload, Check, Trash2, Loader2 } from 'lucide-react'
 import { parseWhatsAppChat } from '../lib/parser.js'
 import { parseBankCSV } from '../lib/bankParser.js'
-import { parseHDFCPDF } from '../lib/pdfExtractor.js'
+import { parseBankPDF } from '../lib/pdfExtractor.js'
 import {
   mergeServiceRecords,
   mergeAttendance,
@@ -42,7 +42,7 @@ export default function Import() {
     if (isPDF) {
       setBank(s => ({ ...s, loading: true }))
       try {
-        const result = await parseHDFCPDF(file)
+        const result = await parseBankPDF(file)
         setBank(s => ({ ...s, parsed: result, loading: false }))
       } catch (err) {
         setBank(s => ({ ...s, error: err.message, loading: false }))
@@ -86,7 +86,7 @@ export default function Import() {
     <div className="p-8 max-w-3xl">
       <h1 className="font-serif text-2xl text-zinc-100 mb-1">Import Data</h1>
       <p className="text-zinc-500 text-sm mb-8">
-        Upload WhatsApp chat export (.txt) and HDFC bank statement (PDF or CSV).
+        Upload WhatsApp chat export (.txt) and bank statement (PDF or CSV).
       </p>
 
       <div className="space-y-5">
@@ -127,7 +127,7 @@ export default function Import() {
         </Section>
 
         {/* ── Bank Statement ── */}
-        <Section title="Bank Statement — HDFC" hint="Accepts PDF (downloaded from HDFC NetBanking) or CSV export. PDF is parsed automatically.">
+        <Section title="Bank Statement" hint="Accepts PDF or CSV export from your bank. PDF is parsed automatically.">
           <DropZone
             label={bank.file ? bank.file.name : 'Click to select PDF or CSV file'}
             hasFile={!!bank.file}

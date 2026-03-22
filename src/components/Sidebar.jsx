@@ -13,8 +13,8 @@ export default function Sidebar() {
   return (
     <aside className="w-52 shrink-0 bg-zinc-900 border-r border-zinc-800 flex flex-col">
       <div className="px-5 py-5 border-b border-zinc-800">
-        <h1 className="font-serif text-amber-400 text-lg leading-tight">Radiant Rue</h1>
-        <p className="text-zinc-500 text-xs mt-0.5">Salon Dashboard</p>
+        <h1 className="font-serif text-amber-400 text-lg leading-tight">BizReport</h1>
+        <p className="text-zinc-500 text-xs mt-0.5">Business Dashboard</p>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5">
@@ -38,7 +38,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-5 py-3 border-t border-zinc-800">
-        <p className="text-zinc-600 text-xs">New Thippasandra, BLR</p>
+        <p className="text-zinc-600 text-xs">v1.0</p>
       </div>
     </aside>
   )

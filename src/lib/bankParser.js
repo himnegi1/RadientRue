@@ -1,7 +1,7 @@
 /**
- * HDFC bank statement CSV parser.
+ * Bank statement CSV parser.
  *
- * HDFC CSV column order (standard export):
+ * Standard CSV column order:
  *   Date | Narration | Ref No./Cheque No. | Value Dt | Withdrawal Amt | Deposit Amt | Closing Balance
  *
  * Auto-categorises transactions based on narration keywords.
@@ -42,12 +42,12 @@ export function parseBankCSV(text) {
     const rawDate = cell('date', 0)
     if (!rawDate || rawDate.toLowerCase() === 'date') continue
 
-    const date = parseHDFCDate(rawDate)
+    const date = parseBankDate(rawDate)
     if (!date) continue
 
     const narration = cell('narration', 1) || cell('description', 1)
     const refNo = cell('ref', 2)
-    const valueDate = parseHDFCDate(cell('value', 3))
+    const valueDate = parseBankDate(cell('value', 3))
     const debit = parseAmount(cell('withdrawal', 4))
     const credit = parseAmount(cell('deposit', 5))
     const balance = parseAmount(cell('closing', 6)) || parseAmount(cell('balance', 6))
@@ -94,7 +94,7 @@ function parseCSVLine(line) {
   return result
 }
 
-function parseHDFCDate(str) {
+function parseBankDate(str) {
   if (!str) return null
   const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/)
   if (!m) return null
@@ -125,15 +125,13 @@ function txnId(date, narration, debit, credit) {
 
 // Known narration patterns → category label
 const RULES = [
-  [/paytm|paysvc/i,                        'paytm'],
-  [/nalamati|rent/i,                        'rent'],
-  [/azam|aazam|shabana|sawan|akram|sadiq|akaram/i, 'salary'],
+  [/paytm|paysvc/i,                         'paytm'],
+  [/\brent\b/i,                             'rent'],
   [/\bsal(ary)?\b/i,                        'salary'],
-  [/bangalore el|bescom|electricity/i,      'electricity'],
-  [/kalu ram|salon product/i,               'products'],
+  [/electricity|bescom|power bill/i,        'electricity'],
+  [/product|supply|supplies/i,              'products'],
   [/amazon|swiggy|zomato|blinkit/i,         'food'],
-  [/anita.*negi|negi.*anita/i,              'owner_transfer'],
-  [/\batm\b|cash wdl/i,                    'cash_withdrawal'],
+  [/\batm\b|cash wdl/i,                     'cash_withdrawal'],
   [/bank charge|card fee|annual fee/i,      'bank_charges'],
   [/aws|web service/i,                      'aws'],
 ]

@@ -78,7 +78,7 @@ export default function Bank() {
   return (
     <div className="p-8">
       <h1 className="font-serif text-2xl text-zinc-100 mb-1">Bank Statement</h1>
-      <p className="text-zinc-500 text-sm mb-6">HDFC — A/C XX8614, Kaggadaspura</p>
+      <p className="text-zinc-500 text-sm mb-6">Imported bank transactions</p>
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3 mb-6">
