@@ -1,13 +1,33 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules
+web/node_modules
+mobile/node_modules
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
 dist
+web/dist
+mobile/dist
+mobile/.expo
+mobile/android
+mobile/ios
+
+# ── Environment ───────────────────────────────────────────────────────────────
 .env
 .env.local
+web/.env
+web/.env.local
+mobile/.env
+mobile/.env.local
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store
 *.log
+Thumbs.db
 
-# Sample data & real WhatsApp exports — never commit
+# ── Sample data & real WhatsApp exports — never commit ────────────────────────
 data/
 public/sample-data.json
+web/public/sample-data.json
 
-# Claude Code working files
+# ── Claude Code working files ─────────────────────────────────────────────────
 .claude/
