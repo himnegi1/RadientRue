@@ -24,7 +24,15 @@ export function parseWhatsAppChat(text) {
 
   const messages = groupMessages(text.split('\n'))
 
+  // Identify the primary sender — the staff member who owns this chat.
+  // We pick the sender with the most messages, ignoring system-like senders
+  // (group names, phone numbers that are clearly owner/admin with few messages).
+  const primarySender = detectPrimarySender(messages)
+
   for (const msg of messages) {
+    // Only process messages from the primary sender
+    if (msg.sender !== primarySender) continue
+
     const result = parseBody(msg.body)
     if (!result) continue
 
@@ -54,10 +62,22 @@ export function parseWhatsAppChat(text) {
     }
   }
 
-  return { records, attendance }
+  return { records, attendance, staffName: primarySender }
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────
+
+// Returns the name of the staff member who "owns" this chat export.
+// Strategy: count messages per sender; the one with the most is the staff member.
+// System messages (group name == sender) are already excluded by groupMessages.
+function detectPrimarySender(messages) {
+  const counts = {}
+  for (const msg of messages) {
+    counts[msg.sender] = (counts[msg.sender] || 0) + 1
+  }
+  // Pick the sender with the highest message count
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
+}
 
 function groupMessages(lines) {
   const messages = []

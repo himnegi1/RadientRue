@@ -103,6 +103,12 @@ export default function Import() {
 
           {wa.parsed && (
             <div className="mt-4 space-y-3">
+              {wa.parsed.staffName && (
+                <p className="text-xs text-zinc-400">
+                  Detected staff: <span className="text-amber-400 font-medium">{wa.parsed.staffName}</span>
+                  <span className="text-zinc-600 ml-1">(only their messages are imported)</span>
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <Stat label="Service entries" value={wa.parsed.records.filter(r => r.entry_type === 'service').length} />
                 <Stat label="Tips" value={wa.parsed.records.filter(r => r.entry_type === 'tip').length} />
