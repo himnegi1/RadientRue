@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { getServiceRecords, getAttendance } from '../lib/storage.js'
+import { Trash2 } from 'lucide-react'
+import { getServiceRecords, getAttendance, deleteStaffRecords } from '../lib/storage.js'
 import { filterByPeriod, groupByStaff, periodLabel } from '../lib/analytics.js'
 
 const PERIODS = [
@@ -23,6 +24,13 @@ export default function Staff() {
     setRecords(getServiceRecords())
     setAttendance(getAttendance())
   }, [])
+
+  function handleDeleteStaff(name) {
+    if (!window.confirm(`Permanently delete all records for "${name}"? This cannot be undone.`)) return
+    deleteStaffRecords(name)
+    setRecords(getServiceRecords())
+    setAttendance(getAttendance())
+  }
 
   const filtered  = useMemo(() => filterByPeriod(records, period), [records, period])
   const staffData = useMemo(() => groupByStaff(filtered), [filtered])
@@ -81,7 +89,16 @@ export default function Staff() {
           <div className="grid grid-cols-3 gap-3 mb-6">
             {staffData.map(s => (
               <div key={s.name} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                <p className="text-zinc-300 font-medium mb-3">{s.name}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-zinc-300 font-medium">{s.name}</p>
+                  <button
+                    onClick={() => handleDeleteStaff(s.name)}
+                    title={`Delete all records for ${s.name}`}
+                    className="text-zinc-600 hover:text-red-400 transition-colors p-0.5"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                   <span className="text-zinc-500">Services</span>
                   <span className="text-zinc-200 text-right">{s.services}</span>

@@ -29,6 +29,12 @@ export function deleteServiceRecord(id) {
   saveServiceRecords(getServiceRecords().filter(r => r.id !== id))
 }
 
+// Remove all service records and attendance for a given staff name
+export function deleteStaffRecords(staffName) {
+  saveServiceRecords(getServiceRecords().filter(r => r.staff_name !== staffName))
+  saveAttendance(getAttendance().filter(r => r.staff_name !== staffName))
+}
+
 export function getBankTransactions() {
   try {
     return JSON.parse(localStorage.getItem(KEYS.bankTransactions) || '[]')
