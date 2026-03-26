@@ -21,33 +21,47 @@
 
 ---
 
-## 👥 Staff (known so far)
+## 👥 Staff
 
-| Name | WhatsApp Group | Notes |
-|------|---------------|-------|
-| Sadiq Husain | "Individual Saddiq expense" | Active since 10 Mar 2026 |
-| Azam | — | Salary ₹17,000/month (paid 05 Mar) |
-| Akram | — | Salary ₹2,100/month |
-| Sawan / Sawan Kumar | — | Salary ₹7,233/month (two payments seen) |
-| Shabana Begam | — | Advance salary ₹4,000 on 18 Feb; full salary ₹18,000 on 05 Mar |
+| Name | WhatsApp Group | Salary | Notes |
+|------|---------------|--------|-------|
+| Azad | "C & B Azad daily work" | — | Phone: +91 6395 493 609 |
+| Akram | — | ₹2,100/month | Posts Login/Logout for attendance |
+| Sawan / Sawan Kumar | — | ₹7,233/month | Two salary payments seen |
+| Sonu | — | — | Umer's chat references Sonu's work |
+| Umer | "C& B umar daily expenses" | — | Phone: notyans848 |
+| Shabana Begam | — | ₹18,000/month | Advance ₹4,000 on 18 Feb |
+| Azam | — | ₹17,000/month (paid 05 Mar) | — |
 
 ---
 
 ## 📱 WhatsApp Message Format
 
-Sadiq's messages follow this pattern:
+Staff messages come in two variants — with and without `~` prefix:
+
 ```
-[DD/MM/YY, HH:MM:SS AM/PM] ~ Sadiq  Husain: <amount> <payment_type> [TIP]
+[DD/MM/YY, HH:MM:SS AM/PM] ~ SenderName: <message>     ← older export format
+[DD/MM/YY, HH:MM:SS AM/PM] SenderName: <message>       ← newer export format
+```
+
+Sender name may also be a phone number with invisible Unicode LTR/RTL marks, e.g.:
+```
+[01/02/26, 5:54:37 PM] ‪+91 6395 493 609‬: 100 hear cut
 ```
 
 ### Parsing Rules
 | Message | Parsed as |
 |---------|-----------|
 | `500 Paytm` | ₹500, type: service, payment: paytm |
-| `100 cash` | ₹100, type: service, payment: cash |
+| `100 cash` / `100 c` | ₹100, type: service, payment: cash |
+| `200 p` / `200 online` | ₹200, type: service, payment: paytm |
 | `50 TIP paytm` | ₹50, type: tip, payment: paytm |
 | `150 50 TIP` | ₹150 service + ₹50 tip (both paytm) |
-| `Login` / `Logout` | Ignored (attendance marker) |
+| `Login` / `Logout` / `Loguot` | Attendance marker — ignored for revenue |
+| `Total 1200` / `My total 1200` | Daily summary — skipped (avoid double-counting) |
+| Numbers ≥ 10,00,000 | Skipped — phone numbers shared in chat (e.g., "9790702167") |
+
+**Default payment type:** If no keyword (cash/paytm/online) is present, defaults to `paytm`.
 
 **Key insight:** "Login" = staff clock-in. Can be used for attendance tracking.
 
@@ -83,7 +97,7 @@ Sadiq's messages follow this pattern:
 
 ---
 
-## 🧱 Prototype Built (Phase 1 — Single HTML file)
+## 🧱 Phase 1 — Prototype (complete)
 
 A single `RadiantRue_Salon_Dashboard.html` was built with:
 - WhatsApp `.txt` export parser (auto-detects Sadiq's format)
@@ -94,102 +108,85 @@ A single `RadiantRue_Salon_Dashboard.html` was built with:
 - LocalStorage for persistence
 - CSV export + Print
 
-**File location:** `/mnt/user-data/outputs/RadiantRue_Salon_Dashboard.html`
-
 ---
 
-## 🚀 Full Product Plan (Phase 2 — This project)
+## 🚀 Phase 2 — React App (this project, in progress)
 
-### Tech Stack Decision
-| Layer | Choice | Reason |
+### Tech Stack
+| Layer | Choice | Status |
 |-------|--------|--------|
-| Frontend | **React + Vite** | Fast dev, component-based |
-| Styling | **Tailwind CSS** | Utility-first, rapid UI |
-| Database | **Supabase** (PostgreSQL) | Free tier, real-time, auth built-in |
-| Auth | **Supabase Auth** | Owner login, staff PIN entry |
-| Hosting | **Netlify** (free tier) | Drag-drop deploy, free |
-| PDF parsing | **pdf-parse** | For HDFC bank statement PDF |
-| Charts | **Recharts** | React-native charts |
-| File export | **xlsx + jsPDF** | Excel + PDF reports |
+| Frontend | React + Vite | ✅ Built |
+| Styling | Tailwind CSS | ✅ Built |
+| Storage | localStorage (→ Supabase later) | ✅ localStorage done |
+| Charts | Recharts | ✅ Built |
+| Auth | Supabase Auth | ⏳ Not yet |
+| Hosting | Netlify | ⏳ Not deployed |
+| PDF parsing | pdfjs-dist | ⏳ Partial |
+| File export | xlsx + jsPDF | ⏳ Not yet |
 
-### Why Supabase over localStorage?
-- Data persists across devices (salon desktop + owner's phone)
-- Multiple staff can log in simultaneously
-- Real-time updates
-- Free tier: 500MB DB, unlimited API calls
-- Can add row-level security per staff
+### Pages Built
+| Page | Route | Status |
+|------|-------|--------|
+| Dashboard / Overview | `/` | ✅ KPI cards, revenue trend chart, payment split donut, daily breakdown table, top staff, expenses |
+| Staff Performance | `/staff` | ✅ Per-staff cards with revenue/cash/paytm/tips/avg/attendance, period filter, comparison bar chart |
+| Service Log | `/service-log` | ✅ Full table, filter by date range / staff / payment type / entry type |
+| Bank Statement | `/bank` | ✅ Table + category summary (needs bank data imported) |
+| Import | `/import` | ✅ WhatsApp .txt upload + Bank PDF/CSV upload |
+
+### What's NOT built yet
+- Report Generator (PDF/Excel export)
+- Supabase migration (currently all localStorage)
+- Netlify deployment
+- Staff PIN login
 
 ---
 
-## 📁 Project Structure (target)
+## 📁 Actual Project Structure
 
 ```
 radiant-rue/
-├── CLAUDE.md                  ← YOU ARE HERE
+├── CLAUDE.md
 ├── README.md
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
+├── postcss.config.js
 ├── index.html
+├── data/                        ← sample WhatsApp exports + bank PDF (gitignored)
 ├── public/
-│   └── favicon.ico
+│   └── sample-data.json         ← pre-parsed test data (gitignored)
 └── src/
     ├── main.jsx
-    ├── App.jsx
+    ├── App.jsx                  ← React Router setup
     ├── index.css
     ├── lib/
-    │   ├── supabase.js          ← Supabase client
-    │   ├── parser.js            ← WhatsApp chat parser
-    │   └── bankParser.js        ← HDFC PDF/text parser
+    │   ├── parser.js            ← WhatsApp chat parser (core logic)
+    │   ├── bankParser.js        ← HDFC CSV parser
+    │   ├── pdfExtractor.js      ← HDFC PDF parser (pdfjs-dist)
+    │   ├── analytics.js         ← filterByPeriod, computeStats, groupByDate/Staff
+    │   └── storage.js           ← localStorage CRUD (keys: rr_service_records, rr_bank_transactions, rr_attendance)
     ├── components/
-    │   ├── Layout/
-    │   │   ├── Sidebar.jsx
-    │   │   └── Topbar.jsx
-    │   ├── Dashboard/
-    │   │   ├── Overview.jsx
-    │   │   ├── MetricCard.jsx
-    │   │   └── Charts.jsx
-    │   ├── Staff/
-    │   │   ├── StaffList.jsx
-    │   │   └── StaffDetail.jsx
-    │   ├── ServiceLog/
-    │   │   └── ServiceLog.jsx
-    │   ├── Bank/
-    │   │   ├── BankStatement.jsx
-    │   │   └── Reconciliation.jsx
-    │   ├── Import/
-    │   │   ├── WhatsAppImport.jsx
-    │   │   └── ManualEntry.jsx
-    │   └── Reports/
-    │       └── ReportGenerator.jsx
-    ├── pages/
-    │   ├── Overview.jsx
-    │   ├── Staff.jsx
-    │   ├── ServiceLog.jsx
-    │   ├── Bank.jsx
-    │   ├── Reconciliation.jsx
-    │   ├── Reports.jsx
-    │   └── Import.jsx
-    ├── hooks/
-    │   ├── useRecords.js
-    │   ├── useStaff.js
-    │   └── useBankData.js
-    └── store/
-        └── useAppStore.js       ← Zustand global state
+    │   └── Sidebar.jsx
+    └── pages/
+        ├── Dashboard.jsx
+        ├── Staff.jsx
+        ├── ServiceLog.jsx
+        ├── Bank.jsx
+        └── Import.jsx
 ```
 
 ---
 
-## 🗄️ Database Schema (Supabase / PostgreSQL)
+## 🗄️ Database Schema (Supabase / PostgreSQL — future migration)
 
 ```sql
 -- Staff table
 CREATE TABLE staff (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  whatsapp_name TEXT,         -- name as it appears in WhatsApp exports
+  whatsapp_name TEXT,
   phone TEXT,
-  pin TEXT,                   -- 4-digit PIN for staff login
+  pin TEXT,
   monthly_salary NUMERIC,
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now()
@@ -199,18 +196,17 @@ CREATE TABLE staff (
 CREATE TABLE service_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   staff_id UUID REFERENCES staff(id),
-  staff_name TEXT,            -- denormalized for easy query
+  staff_name TEXT,
   date DATE NOT NULL,
   time TIME,
   amount NUMERIC NOT NULL,
   payment_type TEXT CHECK (payment_type IN ('paytm', 'cash')),
   entry_type TEXT CHECK (entry_type IN ('service', 'tip')),
-  note TEXT,
-  source TEXT DEFAULT 'whatsapp',  -- 'whatsapp' | 'manual'
+  source TEXT DEFAULT 'whatsapp',
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Attendance (Login/Logout from WhatsApp)
+-- Attendance
 CREATE TABLE attendance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   staff_id UUID REFERENCES staff(id),
@@ -220,7 +216,7 @@ CREATE TABLE attendance (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Bank transactions (from HDFC statement)
+-- Bank transactions
 CREATE TABLE bank_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   date DATE NOT NULL,
@@ -230,18 +226,7 @@ CREATE TABLE bank_transactions (
   debit NUMERIC DEFAULT 0,
   credit NUMERIC DEFAULT 0,
   balance NUMERIC,
-  category TEXT,   -- auto-categorized: 'salary','rent','paytm','products',etc.
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Monthly expenses (manual tracking)
-CREATE TABLE expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  date DATE NOT NULL,
-  description TEXT,
   category TEXT,
-  amount NUMERIC,
-  paid_to TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
@@ -261,28 +246,28 @@ CREATE TABLE expenses (
 
 ## 🎨 Design System
 
-- **Theme:** Dark luxury (like the prototype) — `#0f0e0c` background, `#C9A84C` gold accent
-- **Fonts:** DM Serif Display (headings) + DM Sans (body)
-- **Primary accent:** Gold `#C9A84C`
-- **Success:** Green `#4CAF7D`
-- **Danger:** Red `#E07060`
-- **Info:** Blue `#6090D0`
+- **Theme:** Dark luxury — `#0f0e0c` background, gold accent
+- **Primary accent:** Gold `#C9A84C` / Tailwind `amber-400/500`
+- **Success:** `emerald-400`
+- **Danger:** `red-400`
+- **Text:** `zinc-100` (primary) / `zinc-400` (secondary) / `zinc-500` (muted)
+- **Cards:** `zinc-900` bg, `zinc-800` border
+- **Fonts:** DM Serif Display (headings via `font-serif`) + DM Sans (body)
 
 ---
 
-## 🔜 Next Steps (in order)
+## 🔜 Next Steps
 
-1. `npm create vite@latest` — scaffold React project
-2. Install dependencies (Tailwind, Supabase, Recharts, Zustand, React Router)
-3. Set up Supabase project + run schema migrations
-4. Port parser logic from prototype to `src/lib/parser.js`
-5. Build Layout (Sidebar + Topbar)
-6. Build Overview page with real Supabase data
-7. Build Import page (WhatsApp upload)
-8. Build Staff Performance page
-9. Build Bank Statement + Reconciliation
-10. Build Report Generator (PDF/Excel export)
-11. Deploy to Netlify
+1. ~~Scaffold React + Vite project~~ ✅
+2. ~~Install dependencies~~ ✅
+3. ~~Port WhatsApp parser~~ ✅
+4. ~~Build Layout + all pages~~ ✅
+5. ~~Test with real data~~ ✅
+6. Fix KPI card text overflow (numbers clip when ≥ 6 digits)
+7. Build Report Generator (PDF/Excel export)
+8. Set up Supabase + migrate from localStorage
+9. Deploy to Netlify
+10. Add staff PIN login
 
 ---
 
@@ -290,9 +275,13 @@ CREATE TABLE expenses (
 
 - Always read this file first when starting a new session
 - Supabase credentials will be in `.env` (never commit)
-- The WhatsApp parser is the core logic — handle edge cases carefully
-- "Login" messages = attendance, not revenue
-- Tips are separate from service amounts
+- **WhatsApp parser edge cases:**
+  - Both `~` prefix and no-prefix formats exist in real data
+  - Phone numbers can appear as standalone messages — already filtered (≥ 10,00,000 skipped)
+  - Daily summary messages ("Total 1200", "My total 1200") are skipped to avoid double-counting
+  - "Loguot" (typo) is treated same as "Logout"
+  - Default payment type is `paytm` when no keyword present
+- localStorage keys: `rr_service_records`, `rr_bank_transactions`, `rr_attendance`
 - Bank statement Paytm settlements are T+1 or T+2 delayed vs actual service date
 - Owner accesses from salon desktop browser — optimize for 1280px+ screens
-- Staff should be able to log entries from mobile (responsive design needed)
+- `data/` folder contains real WhatsApp exports — gitignored, never commit
