@@ -127,8 +127,11 @@ function parseBody(body) {
 
   for (const token of tokens) {
     if (/^\d+(\.\d+)?$/.test(token)) {
+      const num = parseFloat(token)
+      // Skip numbers with 7+ digits — likely phone numbers or IDs, not service amounts
+      if (num >= 1000000) continue
       if (pending !== null) pairs.push({ amount: pending, payment_type: null })
-      pending = parseFloat(token)
+      pending = num
     } else if (token === 'CASH') {
       lastPay = 'cash'
       if (pending !== null) { pairs.push({ amount: pending, payment_type: 'cash' }); pending = null }

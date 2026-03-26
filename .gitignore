@@ -4,3 +4,10 @@ dist
 .env.local
 .DS_Store
 *.log
+
+# Sample data & real WhatsApp exports — never commit
+data/
+public/sample-data.json
+
+# Claude Code working files
+.claude/
