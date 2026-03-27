@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { getServiceRecords, getStaffProfile } from '../../lib/storage'
 
 const GOLD = '#C9A84C'
-const FILTERS = ['all', 'service', 'tip']
+const FILTERS = ['all', 'service', 'tip', 'product']
 
 export default function HistoryScreen() {
   const [sections, setSections] = useState([])
@@ -39,6 +39,7 @@ export default function HistoryScreen() {
             data,
             services: data.filter(d => d.entry_type === 'service'),
             tips: data.filter(d => d.entry_type === 'tip'),
+            products: data.filter(d => d.entry_type === 'product'),
           }))
 
         if (mounted) setSections(secs)
@@ -74,7 +75,7 @@ export default function HistoryScreen() {
             onPress={() => setFilter(f)}
           >
             <Text style={[s.filterText, filter === f && s.filterTextActive]}>
-              {f === 'all' ? 'All' : f === 'service' ? 'Services' : 'Tips'}
+              {f === 'all' ? 'All' : f === 'service' ? 'Services' : f === 'tip' ? 'Tips' : 'Products'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -101,18 +102,21 @@ export default function HistoryScreen() {
                 <Text style={s.sectionSvc}>{section.services.length} svc</Text>
                 <Text style={s.sectionRev}>₹{rev.toLocaleString('en-IN')}</Text>
                 {tip > 0 && <Text style={s.sectionTip}>+₹{tip} tips</Text>}
+                {section.products.length > 0 && <Text style={s.sectionProd}>{section.products.length} prd</Text>}
               </View>
             </View>
           )
         }}
         renderItem={({ item }) => (
           <View style={s.row}>
-            <View style={[s.badge, item.entry_type === 'tip' ? s.tipBadge : s.svcBadge]}>
-              <Text style={s.badgeText}>{item.entry_type === 'tip' ? 'TIP' : 'SVC'}</Text>
+            <View style={[s.badge, item.entry_type === 'tip' ? s.tipBadge : item.entry_type === 'product' ? s.prodBadge : s.svcBadge]}>
+              <Text style={[s.badgeText, item.entry_type === 'product' && { color: '#a78bfa' }]}>
+                {item.entry_type === 'tip' ? 'TIP' : item.entry_type === 'product' ? 'PRD' : 'SVC'}
+              </Text>
             </View>
-            <Text style={s.amt}>₹{item.amount.toLocaleString('en-IN')}</Text>
+            <Text style={s.amt}>₹{Number(item.amount).toLocaleString('en-IN')}</Text>
             <Text style={[s.pay, item.payment_type === 'cash' ? s.cash : s.paytm]}>
-              {item.payment_type}
+              {item.payment_type === 'cash' ? 'cash' : 'online'}
             </Text>
             <Text style={s.time}>{item.time?.slice(0, 5) ?? ''}</Text>
           </View>
@@ -136,10 +140,12 @@ const s = StyleSheet.create({
   sectionSvc:       { fontSize: 12, color: '#71717a' },
   sectionRev:       { fontSize: 13, fontWeight: '700', color: GOLD },
   sectionTip:       { fontSize: 12, color: '#4CAF7D' },
+  sectionProd:      { fontSize: 12, color: '#a78bfa' },
   row:              { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e1e1e' },
   badge:            { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   svcBadge:         { backgroundColor: '#27272a' },
   tipBadge:         { backgroundColor: '#14532d' },
+  prodBadge:        { backgroundColor: 'rgba(167,139,250,0.15)' },
   badgeText:        { fontSize: 10, fontWeight: '700', color: '#71717a' },
   amt:              { flex: 1, fontSize: 15, fontWeight: '600', color: '#e4e4e7' },
   pay:              { fontSize: 12 },

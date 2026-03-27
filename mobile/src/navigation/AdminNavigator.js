@@ -10,7 +10,7 @@ const Tab = createBottomTabNavigator()
 
 const COLORS = { active: '#C9A84C', inactive: '#52525b', bg: '#18181b' }
 
-export default function AdminNavigator() {
+export default function AdminNavigator({ onLogout }) {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -24,7 +24,9 @@ export default function AdminNavigator() {
       <Tab.Screen name="Dashboard"  component={AdminDashboardScreen}  options={{ title: 'Dashboard' }} />
       <Tab.Screen name="Staff"      component={AdminStaffScreen}      options={{ title: 'Staff' }} />
       <Tab.Screen name="ServiceLog" component={AdminServiceLogScreen} options={{ title: 'Services' }} />
-      <Tab.Screen name="Settings"   component={AdminSettingsScreen}   options={{ title: 'Settings' }} />
+      <Tab.Screen name="Settings" options={{ title: 'Settings' }}>
+        {() => <AdminSettingsScreen onLogout={onLogout} />}
+      </Tab.Screen>
     </Tab.Navigator>
   )
 }

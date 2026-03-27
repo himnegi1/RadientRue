@@ -9,7 +9,7 @@ const Tab = createBottomTabNavigator()
 
 const COLORS = { active: '#C9A84C', inactive: '#52525b', bg: '#18181b' }
 
-export default function StaffNavigator() {
+export default function StaffNavigator({ onLogout }) {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -22,7 +22,9 @@ export default function StaffNavigator() {
     >
       <Tab.Screen name="Home"    component={StaffHomeScreen}    options={{ title: 'Today' }} />
       <Tab.Screen name="History" component={StaffHistoryScreen} options={{ title: 'My Log' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen}      options={{ title: 'Profile' }} />
+      <Tab.Screen name="Profile" options={{ title: 'Profile' }}>
+        {() => <ProfileScreen onLogout={onLogout} />}
+      </Tab.Screen>
     </Tab.Navigator>
   )
 }
