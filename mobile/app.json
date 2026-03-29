@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Radiant Rue",
-    "slug": "radiant-rue",
+    "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,10 +23,16 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.radiantrue.salon"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "37ad0c49-6d07-4f6d-bd67-dde090857bd2"
+      }
     }
   }
 }
