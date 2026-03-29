@@ -1,8 +1,8 @@
 # Radiant Rue — Salon Management App
 
-A mobile app that turns **WhatsApp staff chat exports** and **bank statements** into clear business reports — built for salon owners who manage staff remotely.
+A mobile app for salon staff and owners to log services, track revenue, and monitor performance — built for salon owners who manage staff remotely.
 
-Staff log every service and payment via WhatsApp throughout the day. This app parses those chats, tracks revenue, attendance, and reconciles with bank statements — all from your phone.
+Staff log every service and payment directly in the app. The owner (admin) gets real-time dashboards with revenue, attendance, and per-staff performance — all from their phone.
 
 ---
 
@@ -15,13 +15,22 @@ Staff log every service and payment via WhatsApp throughout the day. This app pa
 
 ## Features
 
-- **WhatsApp chat parsing** — upload staff chat exports (.txt), auto-extracts every service, tip, cash/online payment, and attendance
-- **Dashboard** — revenue KPIs, daily trends, payment split (cash vs online), top staff ranking, expense breakdown
-- **Staff performance** — per-staff: services count, revenue, cash vs online, tips, average per service, attendance
-- **Service log** — searchable, filterable list of every transaction
-- **Bank statement import** — parse HDFC statements, auto-categorise expenses (rent, salary, products, etc.)
-- **Admin & Staff views** — admin sees everything, staff sees only their own data
+### Staff View
+- **Log services** — tap to record each service with amount, payment type (cash/online), and tips
+- **Attendance** — clock in/out with login and logout
+- **History** — view own service records and earnings
+- **Profile** — view attendance and personal stats
+
+### Admin View
+- **Dashboard** — revenue KPIs, daily trends, payment split (cash vs online), top staff ranking
+- **Staff management** — add/remove staff, view per-staff performance
+- **Service log** — searchable, filterable list of all transactions across staff
+- **Settings** — manage staff PINs, app configuration
+
+### General
+- **PIN-based login** — staff and admin authenticate with a PIN
 - **Supabase backend** — data syncs across devices, no data loss
+- **Dark theme** — gold accent luxury design
 
 ---
 
@@ -70,21 +79,6 @@ radiant-rue/
 ├── docs/                          # Database schema
 └── CLAUDE.md                      # AI assistant instructions
 ```
-
----
-
-## WhatsApp Message Format
-
-Staff send payments in WhatsApp groups. The parser understands:
-
-| Message | Parsed as |
-|---------|-----------|
-| `500 Paytm` | ₹500 service, online |
-| `100 cash` | ₹100 service, cash |
-| `50 TIP paytm` | ₹50 tip, online |
-| `150 50 TIP` | ₹150 service + ₹50 tip |
-| `Login` / `Logout` | Attendance marker (not revenue) |
-| `Total 3646` | Skipped — daily summary, avoids double-counting |
 
 ---
 
