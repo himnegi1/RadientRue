@@ -1,78 +1,81 @@
-# BizReport — WhatsApp & Bank Statement Dashboard
+# Radiant Rue — Salon Management App
 
-A lightweight, browser-based dashboard that turns **WhatsApp staff chat exports** and **bank statements** into clear business reports — no server, no sign-up required.
+A mobile app that turns **WhatsApp staff chat exports** and **bank statements** into clear business reports — built for salon owners who manage staff remotely.
 
-Upload your files, get instant insights. Everything runs in the browser and is stored locally on your device.
-
----
-
-## What it does
-
-- **Parses WhatsApp chat exports** (.txt) — extracts every service entry, tip, cash/online payment, and staff attendance automatically
-- **Parses bank statements** (PDF or CSV) — extracts all transactions and auto-categorises them (salary, rent, online payments, electricity, etc.)
-- **Dashboard** — revenue KPIs, daily bar chart, payment split chart, top staff ranking, expense breakdown
-- **Staff page** — per-staff performance: services count, revenue, cash vs online, tips, average per service, days present
-- **Service Log** — filterable, sortable table of every transaction with per-row delete
-- **Bank page** — full statement view with category filters and per-row delete
-- **Import page** — re-upload the same file anytime, duplicates are automatically skipped
+Staff log every service and payment via WhatsApp throughout the day. This app parses those chats, tracks revenue, attendance, and reconciles with bank statements — all from your phone.
 
 ---
 
-## Tech stack
+## Download
+
+- **Android:** [Google Play Store](https://play.google.com/store/apps/details?id=com.radiantrue.salon) *(under review)*
+- **iOS:** Coming soon
+
+---
+
+## Features
+
+- **WhatsApp chat parsing** — upload staff chat exports (.txt), auto-extracts every service, tip, cash/online payment, and attendance
+- **Dashboard** — revenue KPIs, daily trends, payment split (cash vs online), top staff ranking, expense breakdown
+- **Staff performance** — per-staff: services count, revenue, cash vs online, tips, average per service, attendance
+- **Service log** — searchable, filterable list of every transaction
+- **Bank statement import** — parse HDFC statements, auto-categorise expenses (rent, salary, products, etc.)
+- **Admin & Staff views** — admin sees everything, staff sees only their own data
+- **Supabase backend** — data syncs across devices, no data loss
+
+---
+
+## Tech Stack
 
 | Layer | Choice |
 |-------|--------|
-| Frontend | React 18 + Vite |
-| Styling | Tailwind CSS |
-| Charts | Recharts |
-| PDF parsing | pdfjs-dist (runs in browser) |
-| Routing | React Router v6 |
-| Icons | lucide-react |
-| Storage | Browser localStorage (no backend) |
+| Mobile | React Native + Expo |
+| Backend | Supabase (PostgreSQL + Auth) |
+| Navigation | React Navigation v6 |
+| Build | EAS Build (cloud) |
+| Android | Play Store (com.radiantrue.salon) |
+| iOS | App Store (coming soon) |
 
 ---
 
-## Getting started
+## Project Structure
 
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Start dev server
-npm run dev
-# → http://localhost:5173
-
-# 3. Build for production
-npm run build
+```
+radiant-rue/
+├── mobile/                        ← Main app (Expo/React Native)
+│   ├── App.js                     # Entry point
+│   ├── app.json                   # Expo config
+│   ├── eas.json                   # EAS Build profiles
+│   ├── src/
+│   │   ├── lib/
+│   │   │   └── storage.js         # Supabase CRUD + data helpers
+│   │   ├── navigation/
+│   │   │   ├── RootNavigator.js   # Auth flow (login → admin/staff)
+│   │   │   ├── AdminNavigator.js  # Admin tab navigation
+│   │   │   └── StaffNavigator.js  # Staff tab navigation
+│   │   └── screens/
+│   │       ├── LoginScreen.js     # PIN-based login
+│   │       ├── admin/
+│   │       │   ├── DashboardScreen.js
+│   │       │   ├── StaffScreen.js
+│   │       │   ├── ServiceLogScreen.js
+│   │       │   └── SettingsScreen.js
+│   │       └── staff/
+│   │           ├── HomeScreen.js      # Log services
+│   │           ├── HistoryScreen.js   # View own records
+│   │           └── ProfileScreen.js   # Attendance & profile
+│   └── assets/                    # App icons, screenshots
+├── web/                           ← Legacy web dashboard (not actively maintained)
+├── shared/                        ← Shared parser logic
+├── docs/                          # Database schema
+└── CLAUDE.md                      # AI assistant instructions
 ```
 
 ---
 
-## How to use
+## WhatsApp Message Format
 
-### Import WhatsApp chats
-1. Open WhatsApp → open a staff group → ⋮ → More → Export Chat → **Without Media**
-2. Go to `/import` in the app
-3. Upload the `.txt` file → click **Import X records**
-4. Repeat for each staff member — data merges, no duplicates
-
-### Import bank statements
-1. Download your bank statement as **PDF** or **CSV**
-2. Go to `/import` → Bank Statement section
-3. Upload → click **Import X transactions**
-4. Upload each month separately — they accumulate without duplicates
-
-### Delete incorrect records
-- **Service Log** → trash icon on any row
-- **Bank** → trash icon on any row
-
----
-
-## WhatsApp message format supported
-
-```
-[DD/MM/YY, HH:MM:SS AM/PM] ~ Staff Name: <message>
-```
+Staff send payments in WhatsApp groups. The parser understands:
 
 | Message | Parsed as |
 |---------|-----------|
@@ -80,43 +83,36 @@ npm run build
 | `100 cash` | ₹100 service, cash |
 | `50 TIP paytm` | ₹50 tip, online |
 | `150 50 TIP` | ₹150 service + ₹50 tip |
-| `50cash 50online` | ₹50 cash + ₹50 online |
-| `300 image omitted` | ₹300 service (amount captioned on image) |
-| `Login` / `Logout` | Attendance marker — not counted as revenue |
-| `Total 3646` | Skipped — daily summary, not a transaction |
+| `Login` / `Logout` | Attendance marker (not revenue) |
+| `Total 3646` | Skipped — daily summary, avoids double-counting |
 
 ---
 
-## Project structure
+## Development
 
-```
-src/
-├── lib/
-│   ├── parser.js         # WhatsApp chat parser
-│   ├── pdfExtractor.js   # Bank statement PDF parser (pdfjs-dist)
-│   ├── bankParser.js     # Bank statement CSV parser + auto-categoriser
-│   ├── analytics.js      # Period filtering, stats, grouping helpers
-│   └── storage.js        # localStorage CRUD + merge/delete
-├── pages/
-│   ├── Dashboard.jsx     # Overview with charts and KPIs
-│   ├── Staff.jsx         # Per-staff performance
-│   ├── ServiceLog.jsx    # Full transaction log
-│   ├── Bank.jsx          # Bank statement view
-│   └── Import.jsx        # File upload and import
-└── components/
-    └── Sidebar.jsx       # Navigation
+```bash
+# Install dependencies
+cd mobile
+npm install
+
+# Start Expo dev server
+npx expo start
+
+# Build for Android (production)
+npx eas build --platform android --profile production
+
+# Build for iOS (production)
+npx eas build --platform ios --profile production
+
+# Submit to Play Store
+npx eas submit --platform android --profile production
+
+# Submit to App Store
+npx eas submit --platform ios --profile production
 ```
 
 ---
 
-## Data storage
+## License
 
-All data is stored in **browser localStorage**:
-
-| Key | Contents |
-|-----|----------|
-| `rr_service_records` | WhatsApp service and tip entries |
-| `rr_bank_transactions` | Bank transactions |
-| `rr_attendance` | Staff login/logout records |
-
-Data persists across refreshes but is **per-browser**. Clearing browser data will remove it. For multi-device access, a backend database (e.g. Supabase) can be added.
+Private — not open source.
