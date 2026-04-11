@@ -6,15 +6,27 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://glnhcwljkdpwznbneqfm.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_Pn9VapuZajVIAuWgCnVjFw_eCg_5X1W"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://glnhcwljkdpwznbneqfm.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_Pn9VapuZajVIAuWgCnVjFw_eCg_5X1W"
+      }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://glnhcwljkdpwznbneqfm.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_Pn9VapuZajVIAuWgCnVjFw_eCg_5X1W"
       }
     }
   },
