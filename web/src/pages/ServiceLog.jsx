@@ -1,226 +1,181 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { Trash2 } from 'lucide-react'
-import { getServiceRecords, deleteServiceRecord } from '../lib/storage.js'
+import { getServiceRecords, getStaffList } from '../lib/storage.js'
+
+const FILTERS = [
+  { key: 'all',     label: 'All' },
+  { key: 'service', label: 'Services' },
+  { key: 'tip',     label: 'Tips' },
+  { key: 'product', label: 'Products' },
+]
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+}
 
 export default function ServiceLog() {
   const [records, setRecords] = useState([])
-  const [filters, setFilters] = useState({
-    dateFrom: '',
-    dateTo: '',
-    staff: '',
-    payment: '',
-    type: '',
-  })
-  const [sortField, setSortField] = useState('date')
-  const [sortDir, setSortDir] = useState('desc')
+  const [activeNames, setActiveNames] = useState(new Set())
+  const [hasDisabled, setHasDisabled] = useState(false)
+  const [filter, setFilter] = useState('all')
+  const [showDisabled, setShowDisabled] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    setRecords(getServiceRecords())
+    async function load() {
+      try {
+        setLoading(true)
+        const [recs, staff] = await Promise.all([getServiceRecords(), getStaffList()])
+        setRecords(recs)
+        const names = new Set(staff.map(s => s.name))
+        setActiveNames(names)
+        setHasDisabled(recs.some(r => !names.has(r.staff_name)))
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
-  const staffNames = useMemo(
-    () => [...new Set(records.map(r => r.staff_name))].sort(),
-    [records]
-  )
+  // Group by date, apply filters
+  const sections = useMemo(() => {
+    let filtered = records
+    if (filter !== 'all') {
+      filtered = filtered.filter(r => r.entry_type === filter)
+    }
+    if (!showDisabled) {
+      filtered = filtered.filter(r => activeNames.has(r.staff_name))
+    }
 
-  const filtered = useMemo(() => {
-    return records
-      .filter(r => {
-        if (filters.dateFrom && r.date < filters.dateFrom) return false
-        if (filters.dateTo && r.date > filters.dateTo) return false
-        if (filters.staff && r.staff_name !== filters.staff) return false
-        if (filters.payment && r.payment_type !== filters.payment) return false
-        if (filters.type && r.entry_type !== filters.type) return false
-        return true
-      })
-      .sort((a, b) => {
-        let va = a[sortField]
-        let vb = b[sortField]
-        if (sortField === 'amount') { va = Number(va); vb = Number(vb) }
-        if (va < vb) return sortDir === 'asc' ? -1 : 1
-        if (va > vb) return sortDir === 'asc' ? 1 : -1
-        return 0
-      })
-  }, [records, filters, sortField, sortDir])
+    const grouped = {}
+    for (const r of filtered) {
+      if (!grouped[r.date]) grouped[r.date] = []
+      grouped[r.date].push(r)
+    }
 
-  const totals = useMemo(() => ({
-    services: filtered.filter(r => r.entry_type === 'service').length,
-    cash: filtered.filter(r => r.payment_type === 'cash' && r.entry_type === 'service').reduce((s, r) => s + r.amount, 0),
-    paytm: filtered.filter(r => r.payment_type === 'paytm' && r.entry_type === 'service').reduce((s, r) => s + r.amount, 0),
-    tips: filtered.filter(r => r.entry_type === 'tip').reduce((s, r) => s + r.amount, 0),
-  }), [filtered])
+    return Object.entries(grouped)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, data]) => ({ date, data }))
+  }, [records, filter, showDisabled, activeNames])
 
-  function toggleSort(field) {
-    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    else { setSortField(field); setSortDir('asc') }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-600 border-t-amber-400" />
+      </div>
+    )
   }
 
-  function setFilter(key, val) {
-    setFilters(f => ({ ...f, [key]: val }))
+  if (error) {
+    return (
+      <div className="p-8">
+        <h1 className="font-serif text-2xl text-zinc-100 mb-2">Service Log</h1>
+        <p className="text-red-400 text-sm">{error}</p>
+      </div>
+    )
   }
-
-  function clearFilters() {
-    setFilters({ dateFrom: '', dateTo: '', staff: '', payment: '', type: '' })
-  }
-
-  function handleDelete(id) {
-    deleteServiceRecord(id)
-    setRecords(r => r.filter(x => x.id !== id))
-  }
-
-  const hasFilters = Object.values(filters).some(Boolean)
 
   if (records.length === 0) {
     return (
       <div className="p-8">
         <h1 className="font-serif text-2xl text-zinc-100 mb-2">Service Log</h1>
-        <p className="text-zinc-500 text-sm">
-          No records yet.{' '}
-          <Link to="/" className="text-zinc-300 underline underline-offset-2">Import WhatsApp chat</Link> first.
-        </p>
+        <p className="text-zinc-500 text-sm">No records yet. Staff need to log services from the mobile app.</p>
       </div>
     )
   }
 
   return (
-    <div className="p-8">
-      <h1 className="font-serif text-2xl text-zinc-100 mb-1">Service Log</h1>
-      <p className="text-zinc-500 text-sm mb-6">{records.length} total records</p>
+    <div className="p-8 max-w-5xl">
+      <h1 className="font-serif text-2xl text-zinc-100 mb-4">Service Log</h1>
 
-      {/* Summary bar */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        <Card label="Services" value={totals.services} />
-        <Card label="Cash collected" value={`₹${totals.cash.toLocaleString('en-IN')}`} valueClass="text-yellow-400" />
-        <Card label="Paytm collected" value={`₹${totals.paytm.toLocaleString('en-IN')}`} valueClass="text-blue-400" />
-        <Card label="Tips" value={`₹${totals.tips.toLocaleString('en-IN')}`} valueClass="text-green-400" />
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <input
-          type="date"
-          value={filters.dateFrom}
-          onChange={e => setFilter('dateFrom', e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-3 py-1.5 rounded-md"
-        />
-        <span className="text-zinc-600 text-sm">to</span>
-        <input
-          type="date"
-          value={filters.dateTo}
-          onChange={e => setFilter('dateTo', e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-3 py-1.5 rounded-md"
-        />
-        <select
-          value={filters.staff}
-          onChange={e => setFilter('staff', e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-3 py-1.5 rounded-md"
-        >
-          <option value="">All staff</option>
-          {staffNames.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <select
-          value={filters.payment}
-          onChange={e => setFilter('payment', e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-3 py-1.5 rounded-md"
-        >
-          <option value="">All payments</option>
-          <option value="cash">Cash</option>
-          <option value="paytm">Paytm</option>
-        </select>
-        <select
-          value={filters.type}
-          onChange={e => setFilter('type', e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-3 py-1.5 rounded-md"
-        >
-          <option value="">All types</option>
-          <option value="service">Service</option>
-          <option value="tip">Tip</option>
-        </select>
-        {hasFilters && (
-          <button onClick={clearFilters} className="text-zinc-400 hover:text-zinc-200 text-sm px-2 py-1.5 underline underline-offset-2">
-            Clear
-          </button>
+      {/* Filter row */}
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <div className="flex gap-2">
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors
+                ${filter === f.key
+                  ? 'bg-amber-400/15 border-amber-400 text-amber-400'
+                  : 'border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500'
+                }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {hasDisabled && (
+          <label className="flex items-center gap-2 cursor-pointer select-none ml-auto">
+            <span className="text-zinc-400 text-sm">Show disabled staff</span>
+            <button
+              onClick={() => setShowDisabled(v => !v)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${showDisabled ? 'bg-amber-500/40' : 'bg-zinc-700'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform ${showDisabled ? 'translate-x-5 bg-amber-400' : 'bg-zinc-500'}`} />
+            </button>
+          </label>
         )}
       </div>
 
-      <p className="text-zinc-600 text-xs mb-3">{filtered.length} matching records</p>
-
-      {/* Table */}
-      <div className="border border-zinc-800 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-zinc-800/60 text-zinc-400 text-xs uppercase tracking-wide">
-                <SortTh field="date" current={sortField} dir={sortDir} onSort={toggleSort}>Date</SortTh>
-                <SortTh field="time" current={sortField} dir={sortDir} onSort={toggleSort}>Time</SortTh>
-                <SortTh field="staff_name" current={sortField} dir={sortDir} onSort={toggleSort}>Staff</SortTh>
-                <SortTh field="amount" current={sortField} dir={sortDir} onSort={toggleSort} right>Amount</SortTh>
-                <SortTh field="payment_type" current={sortField} dir={sortDir} onSort={toggleSort}>Payment</SortTh>
-                <SortTh field="entry_type" current={sortField} dir={sortDir} onSort={toggleSort}>Type</SortTh>
-                <th className="px-4 py-2.5 w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800/70">
-              {filtered.map(r => (
-                <tr key={r.id} className="text-zinc-300 hover:bg-zinc-800/20">
-                  <td className="px-4 py-2 whitespace-nowrap">{r.date}</td>
-                  <td className="px-4 py-2 text-zinc-500 whitespace-nowrap">{r.time ? r.time.slice(0, 5) : '—'}</td>
-                  <td className="px-4 py-2">{r.staff_name}</td>
-                  <td className="px-4 py-2 text-right font-medium tabular-nums">
-                    ₹{r.amount.toLocaleString('en-IN')}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                      ${r.payment_type === 'cash'
-                        ? 'bg-yellow-900/30 text-yellow-400'
-                        : 'bg-blue-900/30 text-blue-400'
-                      }`}>
-                      {r.payment_type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`text-xs capitalize ${r.entry_type === 'tip' ? 'text-green-400' : 'text-zinc-500'}`}>
-                      {r.entry_type}
-                    </span>
-                  </td>
-                  <td className="px-2 py-2 text-right">
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      className="text-zinc-600 hover:text-red-400 transition-colors p-1 rounded"
-                      title="Delete record"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {sections.length === 0 ? (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <p className="text-zinc-600 text-sm">No entries</p>
         </div>
-      </div>
-    </div>
-  )
-}
+      ) : (
+        <div className="space-y-1">
+          {sections.map(section => {
+            const svcRecords = section.data.filter(d => d.entry_type === 'service')
+            const sectionRevenue = svcRecords.reduce((s, r) => s + Number(r.amount), 0)
+            return (
+              <div key={section.date}>
+                {/* Date header */}
+                <div className="flex items-center justify-between py-2.5 mt-3">
+                  <span className="text-zinc-200 text-sm font-bold">{formatDate(section.date)}</span>
+                  <span className="text-zinc-500 text-xs">
+                    {section.data.length} entries &middot; ₹{sectionRevenue.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                {/* Entries */}
+                {section.data.map(item => {
+                  const isDisabledStaff = !activeNames.has(item.staff_name)
+                  const badgeLabel = item.entry_type === 'tip' ? 'TIP' : item.entry_type === 'product' ? 'PRD' : 'SVC'
+                  const badgeClass = item.entry_type === 'tip'
+                    ? 'bg-green-900/40 text-green-500'
+                    : item.entry_type === 'product'
+                    ? 'bg-purple-900/30 text-purple-400'
+                    : 'bg-zinc-800 text-zinc-500'
+                  const payClass = item.payment_type === 'cash' ? 'text-amber-500' : 'text-blue-400'
+                  const payLabel = item.payment_type === 'cash' ? 'cash' : 'online'
 
-function Card({ label, value, valueClass = 'text-zinc-100' }) {
-  return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3">
-      <div className="text-zinc-500 text-xs mb-1">{label}</div>
-      <div className={`text-lg font-medium tabular-nums ${valueClass}`}>{value}</div>
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex items-center gap-3 py-2.5 border-b border-zinc-800/50
+                        ${isDisabledStaff ? 'opacity-50' : ''}`}
+                    >
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeClass}`}>
+                        {badgeLabel}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-zinc-200 text-sm font-semibold truncate">{item.staff_name}</p>
+                        <p className="text-zinc-600 text-xs">{item.time?.slice(0, 5) ?? ''}</p>
+                      </div>
+                      <span className={`text-xs ${payClass} mr-2`}>{payLabel}</span>
+                      <span className="text-zinc-100 font-bold text-sm tabular-nums min-w-[60px] text-right">
+                        ₹{Number(item.amount).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
-  )
-}
-
-function SortTh({ field, current, dir, onSort, children, right }) {
-  const active = current === field
-  return (
-    <th
-      className={`px-4 py-2.5 font-medium cursor-pointer select-none hover:text-zinc-200 transition-colors
-        ${right ? 'text-right' : 'text-left'}`}
-      onClick={() => onSort(field)}
-    >
-      {children}{active ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
-    </th>
   )
 }

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
 import { Trash2 } from 'lucide-react'
 import { getBankTransactions, deleteBankTransaction } from '../lib/storage.js'
 
@@ -19,10 +18,22 @@ const CATEGORY_COLOR = {
 
 export default function Bank() {
   const [transactions, setTransactions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [filters, setFilters] = useState({ dateFrom: '', dateTo: '', category: '', flow: '' })
 
   useEffect(() => {
-    setTransactions(getBankTransactions())
+    async function load() {
+      try {
+        setLoading(true)
+        setTransactions(await getBankTransactions())
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const categories = useMemo(
@@ -56,20 +67,40 @@ export default function Bank() {
     setFilters({ dateFrom: '', dateTo: '', category: '', flow: '' })
   }
 
-  function handleDelete(id) {
-    deleteBankTransaction(id)
-    setTransactions(t => t.filter(x => x.id !== id))
+  async function handleDelete(id) {
+    try {
+      await deleteBankTransaction(id)
+      setTransactions(t => t.filter(x => x.id !== id))
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const hasFilters = Object.values(filters).some(Boolean)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-600 border-t-amber-400" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <h1 className="font-serif text-2xl text-zinc-100 mb-2">Bank Statement</h1>
+        <p className="text-red-400 text-sm">{error}</p>
+      </div>
+    )
+  }
 
   if (transactions.length === 0) {
     return (
       <div className="p-8">
         <h1 className="font-serif text-2xl text-zinc-100 mb-2">Bank Statement</h1>
         <p className="text-zinc-500 text-sm">
-          No transactions yet.{' '}
-          <Link to="/" className="text-zinc-300 underline underline-offset-2">Import bank statement</Link> first.
+          No transactions yet.
         </p>
       </div>
     )

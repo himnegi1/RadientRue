@@ -5,8 +5,6 @@ import {
 } from 'react-native'
 import { setRole, saveStaffProfile, verifyPin } from '../lib/storage'
 
-const ADMIN_PIN = '9999'
-
 export default function LoginScreen({ onLogin }) {
   const [pin, setPin]         = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,13 +18,6 @@ export default function LoginScreen({ onLogin }) {
     setError('')
 
     await new Promise(r => setTimeout(r, 300))
-
-    if (code === ADMIN_PIN) {
-      await setRole('admin')
-      await saveStaffProfile({ name: 'Admin', pin: code })
-      onLogin('admin')
-      return
-    }
 
     const staff = await verifyPin(code)
     if (staff) {
