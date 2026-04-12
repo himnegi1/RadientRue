@@ -41,12 +41,13 @@ export default function Settlement() {
     load()
   }, [])
 
+  // Settlement week runs Tuesday to Monday (settle Monday night, includes that Monday)
   const weekStart = useMemo(() => {
     const base = subWeeks(new Date(), weekOffset)
-    return startOfWeek(base, { weekStartsOn: 1 })
+    return startOfWeek(base, { weekStartsOn: 2 }) // 2 = Tuesday
   }, [weekOffset])
 
-  const weekEnd = useMemo(() => endOfWeek(weekStart, { weekStartsOn: 1 }), [weekStart])
+  const weekEnd = useMemo(() => endOfWeek(weekStart, { weekStartsOn: 2 }), [weekStart])
 
   const weekLabel = useMemo(
     () => `${format(weekStart, 'd MMM')} - ${format(weekEnd, 'd MMM yyyy')}`,

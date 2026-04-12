@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Staff from './pages/Staff.jsx'
 import ServiceLog from './pages/ServiceLog.jsx'
-import Bank from './pages/Bank.jsx'
+// Bank page removed
 import Settlement from './pages/Settlement.jsx'
 import Settings from './pages/Settings.jsx'
 import Login from './pages/Login.jsx'
@@ -55,7 +55,7 @@ export default function App() {
                 <Route path="/"            element={<Dashboard />} />
                 <Route path="/staff"       element={<Staff />} />
                 <Route path="/service-log" element={<ServiceLog />} />
-                <Route path="/bank"        element={<Bank />} />
+
                 <Route path="/settlement"  element={<Settlement />} />
                 <Route path="/settings"    element={<Settings onLogout={handleLogout} />} />
                 <Route path="*"            element={<Navigate to="/" />} />

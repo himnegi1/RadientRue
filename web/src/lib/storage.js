@@ -7,9 +7,12 @@ export function getISTDate() {
 }
 
 export function getWeekStart(dateStr) {
+  // Returns Tuesday of the settlement week containing dateStr
+  // Settlement runs Tue-Mon (settle Monday night, includes that Monday)
   const d = new Date(dateStr + 'T12:00:00')
-  const day = d.getDay()
-  const diff = day === 0 ? 6 : day - 1
+  const day = d.getDay() // 0=Sun, 1=Mon, 2=Tue...6=Sat
+  // Days since Tuesday: Sun=5, Mon=6, Tue=0, Wed=1, Thu=2, Fri=3, Sat=4
+  const diff = (day + 5) % 7
   d.setDate(d.getDate() - diff)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
