@@ -2,11 +2,13 @@
   base    = "web"
   command = "npm run build"
   publish = "dist"
+  ignore  = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- web/"
 
-# Only rebuild when files inside web/ change — mobile/ and shared/ changes are ignored
 [build.environment]
   NODE_VERSION = "20"
 
-# Skip build if no web/ files changed (saves Netlify build minutes)
-[build]
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- web/"
+# SPA redirect — all routes go to index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
