@@ -101,7 +101,7 @@ export default function Settlement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-600 border-t-amber-400" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-300 dark:border-zinc-600 border-t-amber-500 dark:border-t-amber-400" />
       </div>
     )
   }
@@ -109,23 +109,23 @@ export default function Settlement() {
   if (error) {
     return (
       <div className="p-8">
-        <h1 className="font-serif text-2xl text-zinc-100 mb-2">Settlement</h1>
-        <p className="text-red-400 text-sm">{error}</p>
+        <h1 className="font-serif text-2xl text-stone-900 dark:text-zinc-100 mb-2">Settlement</h1>
+        <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
       </div>
     )
   }
 
   return (
     <div className="p-8 max-w-4xl">
-      <h1 className="font-serif text-2xl text-zinc-100 mb-1">Weekly Settlement</h1>
-      <p className="text-zinc-500 text-sm mb-6">Staff payout breakdown by week</p>
+      <h1 className="font-serif text-2xl text-stone-900 dark:text-zinc-100 mb-1">Weekly Settlement</h1>
+      <p className="text-stone-400 dark:text-zinc-500 text-sm mb-6">Staff payout breakdown by week</p>
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <select
           value={selectedStaff}
           onChange={e => setSelectedStaff(e.target.value)}
-          className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-3 py-2 rounded-md"
+          className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-sm px-3 py-2 rounded-md"
         >
           {staffList.map(s => (
             <option key={s.id} value={s.name}>{s.name}</option>
@@ -136,15 +136,15 @@ export default function Settlement() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setWeekOffset(o => o + 1)}
-            className="bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-zinc-200 text-sm px-3 py-2 rounded-md transition-colors"
+            className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-500 dark:text-zinc-400 hover:text-stone-800 dark:hover:text-zinc-200 text-sm px-3 py-2 rounded-md transition-colors"
           >
             &larr; Prev
           </button>
-          <span className="text-zinc-300 text-sm px-3 py-2 min-w-[180px] text-center">{weekLabel}</span>
+          <span className="text-stone-700 dark:text-zinc-300 text-sm px-3 py-2 min-w-[180px] text-center">{weekLabel}</span>
           <button
             onClick={() => setWeekOffset(o => Math.max(0, o - 1))}
             disabled={weekOffset === 0}
-            className="bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:text-zinc-600 disabled:cursor-not-allowed text-sm px-3 py-2 rounded-md transition-colors"
+            className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-500 dark:text-zinc-400 hover:text-stone-800 dark:hover:text-zinc-200 disabled:text-stone-300 dark:disabled:text-zinc-600 disabled:cursor-not-allowed text-sm px-3 py-2 rounded-md transition-colors"
           >
             Next &rarr;
           </button>
@@ -153,29 +153,29 @@ export default function Settlement() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-5 gap-3 mb-6">
-        <SummaryCard label="Target Bonus" value={`₹${inr(weeklyTotals.totalBonus)}`} sub={`10% of days >= ₹3k`} color="text-amber-400" />
-        <SummaryCard label="Tips" value={`₹${inr(weeklyTotals.totalTips)}`} sub="All tip entries" color="text-emerald-400" />
-        <SummaryCard label="Products" value={`₹${inr(weeklyTotals.productCommission)}`} sub={`${weeklyTotals.totalProducts} x ₹${PRODUCT_COMMISSION}`} color="text-blue-400" />
-        <SummaryCard label="Overtime" value={`₹${inr(weeklyTotals.overtime)}`} sub="From OT records" color="text-purple-400" />
+        <SummaryCard label="Target Bonus" value={`₹${inr(weeklyTotals.totalBonus)}`} sub={`10% of days >= ₹3k`} color="text-amber-600 dark:text-amber-400" />
+        <SummaryCard label="Tips" value={`₹${inr(weeklyTotals.totalTips)}`} sub="All tip entries" color="text-emerald-600 dark:text-emerald-400" />
+        <SummaryCard label="Products" value={`₹${inr(weeklyTotals.productCommission)}`} sub={`${weeklyTotals.totalProducts} x ₹${PRODUCT_COMMISSION}`} color="text-blue-600 dark:text-blue-400" />
+        <SummaryCard label="Overtime" value={`₹${inr(weeklyTotals.overtime)}`} sub="From OT records" color="text-purple-600 dark:text-purple-400" />
         <SummaryCard
           label="Total Payout"
           value={`₹${inr(weeklyTotals.totalPayout)}`}
           sub={`Revenue: ₹${inr(weeklyTotals.totalRevenue)}`}
-          color="text-zinc-100"
+          color="text-stone-900 dark:text-zinc-100"
           highlight
         />
       </div>
 
       {/* Daily breakdown table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-800">
-          <p className="text-zinc-200 font-medium">Daily Breakdown</p>
-          <p className="text-zinc-500 text-xs mt-0.5">{selectedStaff} - {weekLabel}</p>
+      <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-stone-200 dark:border-zinc-800">
+          <p className="text-stone-800 dark:text-zinc-200 font-medium">Daily Breakdown</p>
+          <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">{selectedStaff} - {weekLabel}</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-zinc-800/60 text-zinc-500 text-xs uppercase tracking-wide">
+              <tr className="bg-stone-50 dark:bg-zinc-800/60 text-stone-400 dark:text-zinc-500 text-xs uppercase tracking-wide">
                 <th className="px-5 py-2.5 text-left font-normal">Day</th>
                 <th className="px-5 py-2.5 text-left font-normal">Date</th>
                 <th className="px-5 py-2.5 text-right font-normal">Revenue</th>
@@ -184,33 +184,33 @@ export default function Settlement() {
                 <th className="px-5 py-2.5 text-right font-normal">Products</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/50">
+            <tbody className="divide-y divide-stone-100 dark:divide-zinc-800/50">
               {dailyBreakdown.map(d => (
-                <tr key={d.date} className="hover:bg-zinc-800/20 transition-colors">
-                  <td className="px-5 py-2.5 text-zinc-400">{d.day}</td>
-                  <td className="px-5 py-2.5 text-zinc-300">{d.date}</td>
-                  <td className="px-5 py-2.5 text-right text-zinc-200 tabular-nums font-medium">
+                <tr key={d.date} className="hover:bg-stone-50 dark:hover:bg-zinc-800/20 transition-colors">
+                  <td className="px-5 py-2.5 text-stone-500 dark:text-zinc-400">{d.day}</td>
+                  <td className="px-5 py-2.5 text-stone-700 dark:text-zinc-300">{d.date}</td>
+                  <td className="px-5 py-2.5 text-right text-stone-800 dark:text-zinc-200 tabular-nums font-medium">
                     {d.revenue > 0 ? `₹${inr(d.revenue)}` : '—'}
                   </td>
-                  <td className={`px-5 py-2.5 text-right tabular-nums ${d.bonus > 0 ? 'text-amber-400' : 'text-zinc-600'}`}>
+                  <td className={`px-5 py-2.5 text-right tabular-nums ${d.bonus > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-stone-300 dark:text-zinc-600'}`}>
                     {d.bonus > 0 ? `₹${inr(d.bonus)}` : '—'}
                   </td>
-                  <td className={`px-5 py-2.5 text-right tabular-nums ${d.tips > 0 ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                  <td className={`px-5 py-2.5 text-right tabular-nums ${d.tips > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-zinc-600'}`}>
                     {d.tips > 0 ? `₹${inr(d.tips)}` : '—'}
                   </td>
-                  <td className="px-5 py-2.5 text-right text-zinc-400 tabular-nums">
+                  <td className="px-5 py-2.5 text-right text-stone-500 dark:text-zinc-400 tabular-nums">
                     {d.products > 0 ? d.products : '—'}
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="bg-zinc-800/50 border-t border-zinc-700 text-xs font-semibold">
-                <td className="px-5 py-3 text-zinc-400" colSpan={2}>Total</td>
-                <td className="px-5 py-3 text-right text-zinc-100 tabular-nums">₹{inr(weeklyTotals.totalRevenue)}</td>
-                <td className="px-5 py-3 text-right text-amber-400 tabular-nums">₹{inr(weeklyTotals.totalBonus)}</td>
-                <td className="px-5 py-3 text-right text-emerald-400 tabular-nums">₹{inr(weeklyTotals.totalTips)}</td>
-                <td className="px-5 py-3 text-right text-zinc-300 tabular-nums">{weeklyTotals.totalProducts}</td>
+              <tr className="bg-stone-50 dark:bg-zinc-800/50 border-t border-stone-200 dark:border-zinc-700 text-xs font-semibold">
+                <td className="px-5 py-3 text-stone-500 dark:text-zinc-400" colSpan={2}>Total</td>
+                <td className="px-5 py-3 text-right text-stone-900 dark:text-zinc-100 tabular-nums">₹{inr(weeklyTotals.totalRevenue)}</td>
+                <td className="px-5 py-3 text-right text-amber-600 dark:text-amber-400 tabular-nums">₹{inr(weeklyTotals.totalBonus)}</td>
+                <td className="px-5 py-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">₹{inr(weeklyTotals.totalTips)}</td>
+                <td className="px-5 py-3 text-right text-stone-700 dark:text-zinc-300 tabular-nums">{weeklyTotals.totalProducts}</td>
               </tr>
             </tfoot>
           </table>
@@ -220,13 +220,13 @@ export default function Settlement() {
   )
 }
 
-function SummaryCard({ label, value, sub, color = 'text-zinc-100', highlight }) {
+function SummaryCard({ label, value, sub, color = 'text-stone-900 dark:text-zinc-100', highlight }) {
   return (
-    <div className={`bg-zinc-900 rounded-xl px-4 py-3.5 border
-      ${highlight ? 'border-amber-500/40 border-t-[3px] border-t-amber-400' : 'border-zinc-800'}`}>
-      <p className="text-zinc-500 text-xs mb-2">{label}</p>
+    <div className={`bg-white dark:bg-zinc-900 rounded-xl px-4 py-3.5 border
+      ${highlight ? 'border-amber-500/40 border-t-[3px] border-t-amber-500 dark:border-t-amber-400' : 'border-stone-200 dark:border-zinc-800'}`}>
+      <p className="text-stone-400 dark:text-zinc-500 text-xs mb-2">{label}</p>
       <p className={`text-lg font-semibold tabular-nums mb-0.5 ${color}`}>{value}</p>
-      {sub && <p className="text-zinc-600 text-xs">{sub}</p>}
+      {sub && <p className="text-stone-300 dark:text-zinc-600 text-xs">{sub}</p>}
     </div>
   )
 }

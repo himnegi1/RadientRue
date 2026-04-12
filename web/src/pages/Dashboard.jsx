@@ -58,12 +58,25 @@ function filterByPeriod(records, period) {
   return records.filter(r => r.date >= from && r.date <= to)
 }
 
+function useIsDark() {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains('dark'))
+    })
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return dark
+}
+
 export default function Dashboard() {
   const [records, setRecords] = useState([])
   const [activeStaff, setActiveStaff] = useState([])
   const [period, setPeriod] = useState('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const isDark = useIsDark()
 
   useEffect(() => {
     async function load() {
@@ -105,9 +118,9 @@ export default function Dashboard() {
 
   // Donut data
   const payPie = useMemo(() => [
-    { name: 'Online', value: totalPaytm, color: '#C9A84C' },
-    { name: 'Cash', value: totalCash, color: '#3f3f46' },
-  ].filter(d => d.value > 0), [totalPaytm, totalCash])
+    { name: 'Online', value: totalPaytm, color: isDark ? '#C9A84C' : '#b45309' },
+    { name: 'Cash', value: totalCash, color: isDark ? '#3f3f46' : '#d6d3d1' },
+  ].filter(d => d.value > 0), [totalPaytm, totalCash, isDark])
 
   // Leaderboard - only active staff
   const leaderboard = useMemo(() => {
@@ -123,10 +136,19 @@ export default function Dashboard() {
       .slice(0, 5)
   }, [services, activeStaff])
 
+  // Chart theme colors
+  const chartGrid = isDark ? '#27272a' : '#e7e5e4'
+  const chartTick = isDark ? '#71717a' : '#78716c'
+  const chartAxis = isDark ? '#3f3f46' : '#d6d3d1'
+  const barFill = isDark ? 'rgba(201,168,76,0.25)' : 'rgba(180,83,9,0.18)'
+  const tooltipBg = isDark ? '#27272a' : '#ffffff'
+  const tooltipBorder = isDark ? '#3f3f46' : '#e7e5e4'
+  const tooltipText = isDark ? '#e4e3df' : '#1c1917'
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-600 border-t-amber-400" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-300 dark:border-zinc-600 border-t-amber-500 dark:border-t-amber-400" />
       </div>
     )
   }
@@ -134,9 +156,9 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="bg-zinc-900 border border-red-900/40 rounded-xl p-8 max-w-sm text-center">
-          <p className="text-red-400 text-sm mb-2">Failed to load data</p>
-          <p className="text-zinc-500 text-xs">{error}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/40 rounded-xl p-8 max-w-sm text-center">
+          <p className="text-red-500 dark:text-red-400 text-sm mb-2">Failed to load data</p>
+          <p className="text-stone-400 dark:text-zinc-500 text-xs">{error}</p>
         </div>
       </div>
     )
@@ -147,17 +169,19 @@ export default function Dashboard() {
   return (
     <div className="min-h-full flex flex-col">
       {/* Sticky period bar */}
-      <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/80 px-8 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-stone-50/95 dark:bg-zinc-950/95 backdrop-blur-sm border-b border-stone-200/80 dark:border-zinc-800/80 px-8 py-3 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
-          <span className="text-zinc-100 font-medium">Dashboard</span>
+          <span className="text-stone-900 dark:text-zinc-100 font-medium">Dashboard</span>
         </div>
-        <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1 gap-0.5">
+        <div className="flex bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-lg p-1 gap-0.5">
           {PERIODS.map(p => (
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors
-                ${period === p.key ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                ${period === p.key
+                  ? 'bg-stone-200 dark:bg-zinc-700 text-stone-900 dark:text-zinc-100'
+                  : 'text-stone-400 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300'}`}
             >
               {p.label}
             </button>
@@ -177,25 +201,25 @@ export default function Dashboard() {
         {/* Revenue Trend + Payment Methods */}
         <div className="grid grid-cols-3 gap-4">
           {/* Weekly bar chart */}
-          <div className="col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="col-span-2 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl p-6">
             <div className="mb-5">
-              <p className="text-zinc-200 font-medium">Revenue Trend</p>
-              <p className="text-zinc-500 text-xs mt-0.5">Weekly distribution</p>
+              <p className="text-stone-800 dark:text-zinc-200 font-medium">Revenue Trend</p>
+              <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">Weekly distribution</p>
             </div>
             {dayChartData.every(d => d.revenue === 0) ? (
               <NoData h={220} />
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={dayChartData} barCategoryGap="30%">
-                  <CartesianGrid vertical={false} stroke="#27272a" />
+                  <CartesianGrid vertical={false} stroke={chartGrid} />
                   <XAxis
                     dataKey="day"
-                    tick={{ fill: '#71717a', fontSize: 11 }}
-                    axisLine={{ stroke: '#3f3f46' }}
+                    tick={{ fill: chartTick, fontSize: 11 }}
+                    axisLine={{ stroke: chartAxis }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#71717a', fontSize: 11 }}
+                    tick={{ fill: chartTick, fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                     width={50}
@@ -206,24 +230,24 @@ export default function Dashboard() {
                       if (!active || !payload?.length) return null
                       const val = payload[0]?.value || 0
                       return (
-                        <div className="bg-zinc-800 border border-zinc-700 rounded-lg px-3.5 py-2.5 text-xs shadow-xl">
-                          <p className="text-zinc-300 font-medium mb-1">{label}</p>
-                          <p className="text-amber-400 font-semibold">₹{inr(val)}</p>
+                        <div className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 text-xs shadow-xl">
+                          <p className="text-stone-700 dark:text-zinc-300 font-medium mb-1">{label}</p>
+                          <p className="text-amber-600 dark:text-amber-400 font-semibold">₹{inr(val)}</p>
                         </div>
                       )
                     }}
-                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                    cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
                   />
-                  <Bar dataKey="revenue" fill="rgba(201,168,76,0.25)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenue" fill={barFill} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </div>
 
           {/* Payment Methods donut */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <p className="text-zinc-200 font-medium mb-0.5">Payment Methods</p>
-            <p className="text-zinc-500 text-xs mb-4">Digital vs Cash split</p>
+          <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl p-6">
+            <p className="text-stone-800 dark:text-zinc-200 font-medium mb-0.5">Payment Methods</p>
+            <p className="text-stone-400 dark:text-zinc-500 text-xs mb-4">Digital vs Cash split</p>
             {payPie.length === 0 ? (
               <NoData h={180} />
             ) : (
@@ -242,31 +266,31 @@ export default function Dashboard() {
                     </Pie>
                     <Tooltip
                       formatter={v => [`₹${inr(v)}`, '']}
-                      contentStyle={{ background: '#27272a', border: '1px solid #3f3f46', borderRadius: 8, fontSize: 12 }}
-                      itemStyle={{ color: '#e4e3df' }}
+                      contentStyle={{ background: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: 8, fontSize: 12 }}
+                      itemStyle={{ color: tooltipText }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex items-center justify-center mb-3">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-zinc-100">{paytmPct}%</p>
-                    <p className="text-zinc-500 text-xs tracking-widest uppercase">Digital</p>
+                    <p className="text-2xl font-bold text-stone-900 dark:text-zinc-100">{paytmPct}%</p>
+                    <p className="text-stone-400 dark:text-zinc-500 text-xs tracking-widest uppercase">Digital</p>
                   </div>
                 </div>
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2 text-zinc-400">
-                      <span className="w-2.5 h-2.5 rounded-sm shrink-0 bg-amber-500" />
+                    <span className="flex items-center gap-2 text-stone-500 dark:text-zinc-400">
+                      <span className="w-2.5 h-2.5 rounded-sm shrink-0 bg-amber-600 dark:bg-amber-500" />
                       Online
                     </span>
-                    <span className="text-zinc-300 tabular-nums font-medium">₹{inr(totalPaytm)}</span>
+                    <span className="text-stone-700 dark:text-zinc-300 tabular-nums font-medium">₹{inr(totalPaytm)}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2 text-zinc-400">
-                      <span className="w-2.5 h-2.5 rounded-sm shrink-0 bg-zinc-600" />
+                    <span className="flex items-center gap-2 text-stone-500 dark:text-zinc-400">
+                      <span className="w-2.5 h-2.5 rounded-sm shrink-0 bg-stone-300 dark:bg-zinc-600" />
                       Cash
                     </span>
-                    <span className="text-zinc-300 tabular-nums font-medium">₹{inr(totalCash)}</span>
+                    <span className="text-stone-700 dark:text-zinc-300 tabular-nums font-medium">₹{inr(totalCash)}</span>
                   </div>
                 </div>
               </>
@@ -276,35 +300,35 @@ export default function Dashboard() {
 
         {/* Leaderboard */}
         {leaderboard.length > 0 && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl p-6">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-zinc-200 font-medium">Leaderboard</p>
-                <p className="text-zinc-500 text-xs mt-0.5">Top active staff by revenue</p>
+                <p className="text-stone-800 dark:text-zinc-200 font-medium">Leaderboard</p>
+                <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">Top active staff by revenue</p>
               </div>
-              <Link to="/staff" className="text-zinc-600 hover:text-zinc-400 text-xs">View all</Link>
+              <Link to="/staff" className="text-stone-400 dark:text-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400 text-xs">View all</Link>
             </div>
             <div className="space-y-2.5">
               {leaderboard.map(([name, rev], i) => {
                 const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
                 const badgeBg = i === 0 ? '#C9A84C' : i === 1 ? '#a1a1aa' : i === 2 ? '#78716c' : '#3f3f46'
                 return (
-                  <div key={name} className="flex items-center justify-between bg-zinc-800/50 border border-zinc-800 rounded-xl px-4 py-3">
+                  <div key={name} className="flex items-center justify-between bg-stone-50 dark:bg-zinc-800/50 border border-stone-100 dark:border-zinc-800 rounded-xl px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-amber-600/80 flex items-center justify-center">
-                          <span className="text-sm font-bold text-amber-950">{initials}</span>
+                        <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-600/80 flex items-center justify-center">
+                          <span className="text-sm font-bold text-amber-700 dark:text-amber-950">{initials}</span>
                         </div>
                         <div
-                          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-zinc-900"
+                          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900"
                           style={{ backgroundColor: badgeBg }}
                         >
                           <span className="text-[9px] font-extrabold text-black">{i + 1}</span>
                         </div>
                       </div>
-                      <span className="text-zinc-200 font-semibold text-sm">{name}</span>
+                      <span className="text-stone-800 dark:text-zinc-200 font-semibold text-sm">{name}</span>
                     </div>
-                    <span className="text-amber-400 font-bold text-sm tabular-nums">₹{fmt(rev)}</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-bold text-sm tabular-nums">₹{fmt(rev)}</span>
                   </div>
                 )
               })}
@@ -318,18 +342,18 @@ export default function Dashboard() {
 
 function KpiCard({ label, value, gold }) {
   return (
-    <div className={`bg-zinc-900 rounded-xl px-5 py-4 border relative overflow-hidden
-      ${gold ? 'border-amber-500/40 border-t-[3px] border-t-amber-400' : 'border-zinc-800'}`}>
+    <div className={`bg-white dark:bg-zinc-900 rounded-xl px-5 py-4 border relative overflow-hidden
+      ${gold ? 'border-amber-500/40 border-t-[3px] border-t-amber-500 dark:border-t-amber-400' : 'border-stone-200 dark:border-zinc-800'}`}>
       <div className="absolute top-0 left-0 w-[3px] h-full bg-amber-400/40" />
-      <p className="text-zinc-500 text-[9px] uppercase tracking-[2px] mb-3">{label}</p>
-      <p className="text-2xl font-bold tabular-nums text-zinc-100">{value}</p>
+      <p className="text-stone-400 dark:text-zinc-500 text-[9px] uppercase tracking-[2px] mb-3">{label}</p>
+      <p className="text-2xl font-bold tabular-nums text-stone-900 dark:text-zinc-100">{value}</p>
     </div>
   )
 }
 
 function NoData({ h = 160 }) {
   return (
-    <div className="flex items-center justify-center text-zinc-600 text-sm" style={{ height: h }}>
+    <div className="flex items-center justify-center text-stone-300 dark:text-zinc-600 text-sm" style={{ height: h }}>
       No data for this period
     </div>
   )
@@ -338,15 +362,15 @@ function NoData({ h = 160 }) {
 function EmptyState() {
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 max-w-sm text-center">
+      <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-12 max-w-sm text-center">
         <div className="text-5xl mb-5">📊</div>
-        <h2 className="font-serif text-xl text-zinc-100 mb-2">Welcome to BizReport</h2>
-        <p className="text-zinc-500 text-sm mb-6 leading-relaxed">
+        <h2 className="font-serif text-xl text-stone-900 dark:text-zinc-100 mb-2">Welcome to BizReport</h2>
+        <p className="text-stone-400 dark:text-zinc-500 text-sm mb-6 leading-relaxed">
           No service records found yet. Staff need to start logging services from the mobile app.
         </p>
         <Link
           to="/settings"
-          className="inline-block bg-zinc-700 hover:bg-zinc-600 text-zinc-100 text-sm px-6 py-2.5 rounded-lg transition-colors"
+          className="inline-block bg-stone-200 dark:bg-zinc-700 hover:bg-stone-300 dark:hover:bg-zinc-600 text-stone-900 dark:text-zinc-100 text-sm px-6 py-2.5 rounded-lg transition-colors"
         >
           Go to Settings
         </Link>

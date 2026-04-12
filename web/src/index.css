@@ -6,20 +6,37 @@
   box-sizing: border-box;
 }
 
+/* Light mode (default) */
 body {
   margin: 0;
+  background-color: #fafaf9;
+  color: #1c1917;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Dark mode */
+.dark body {
   background-color: #0c0c0e;
   color: #e4e3df;
 }
 
+/* Scrollbar - Light */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: #f5f5f4;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #d6d3d1;
   border-radius: 3px;
+}
+
+/* Scrollbar - Dark */
+.dark ::-webkit-scrollbar-track {
+  background: #18181b;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
 }
