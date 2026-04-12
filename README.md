@@ -10,9 +10,9 @@ Staff log every service and payment from their Android phones. The owner gets re
 
 | Platform | URL |
 |----------|-----|
-| **Web Dashboard** | [radientrue.netlify.app](https://radientrue.netlify.app) |
+| **Web Dashboard (Admin)** | [radientrue.netlify.app](https://radientrue.netlify.app) |
 | **Android App** | [Google Play Store](https://play.google.com/store/apps/details?id=com.radiantrue.salon) |
-| **iOS** | Not available (admin uses web dashboard instead) |
+| **iOS** | Coming soon |
 
 ---
 
@@ -21,10 +21,10 @@ Staff log every service and payment from their Android phones. The owner gets re
 ```
 ADMIN (Owner)                           STAFF (Salon employees)
      |                                        |
- Web Dashboard                          Mobile App (Android)
- (React + Vite)                         (React Native + Expo)
- Email/password login                   4-digit PIN login
- (Supabase Auth)                        (Staff-only, no admin access)
+ Web Dashboard (Admin View)             Mobile App (Android)
+ (React + Vite + Tailwind)              (React Native + Expo)
+ Email/password login                   4-digit PIN login (staff)
+ (Supabase Auth)                        Email/password login (admin)
      |                                        |
      +------------ Supabase DB ---------------+
                  (PostgreSQL + RLS)
@@ -102,7 +102,7 @@ staff (id, name, pin, phone, monthly_salary, active, created_at)
 
 -- Service/tip/product entries logged by staff
 service_records (id, staff_name, date, time, amount, payment_type, entry_type, source, created_at)
-  -- payment_type: 'paytm' | 'cash' | 'online'
+  -- payment_type: 'online' | 'cash'
   -- entry_type: 'service' | 'tip' | 'product'
 
 -- Clock in/out records

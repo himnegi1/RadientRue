@@ -31,3 +31,6 @@ web/public/sample-data.json
 
 # ── Claude Code working files ─────────────────────────────────────────────────
 .claude/
+
+# Local Netlify folder
+.netlify

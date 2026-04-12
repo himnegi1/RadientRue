@@ -1,16 +1,21 @@
 import React, { useState, useRef } from 'react'
 import {
-  View, Text, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, ImageBackground,
+  View, Text, TouchableOpacity, TextInput,
+  StyleSheet, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { setRole, saveStaffProfile, verifyPin } from '../lib/storage'
+import { supabase } from '../lib/supabase'
 
 export default function LoginScreen({ onLogin }) {
+  const [mode, setMode] = useState('pin') // 'pin' | 'admin'
   const [pin, setPin]         = useState('')
+  const [email, setEmail]     = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
   const busy = useRef(false)
 
+  // --- Staff PIN Login ---
   async function attemptLogin(code) {
     if (busy.current) return
     busy.current = true
@@ -51,6 +56,92 @@ export default function LoginScreen({ onLogin }) {
     }
   }
 
+  // --- Admin Email/Password Login ---
+  async function handleAdminLogin() {
+    if (loading) return
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+      if (authError) throw authError
+
+      await setRole('admin')
+      await saveStaffProfile({ name: 'Admin', email: email.trim() })
+      onLogin('admin')
+    } catch (err) {
+      setError(err.message || 'Invalid email or password')
+      setLoading(false)
+    }
+  }
+
+  // --- Admin Login View ---
+  if (mode === 'admin') {
+    return (
+      <SafeAreaView style={s.safe}>
+        <KeyboardAvoidingView
+          style={s.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={s.brandSection}>
+            <View style={s.iconCircle}>
+              <Text style={s.iconText}>✿</Text>
+            </View>
+            <Text style={s.logo}>Radiant Rue</Text>
+            <Text style={s.sub}>ADMIN LOGIN</Text>
+          </View>
+
+          <View style={s.formContainer}>
+            <TextInput
+              style={s.input}
+              placeholder="Email"
+              placeholderTextColor="#a8969a"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TextInput
+              style={s.input}
+              placeholder="Password"
+              placeholderTextColor="#a8969a"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+
+            {error ? <Text style={s.error}>{error}</Text> : null}
+
+            <TouchableOpacity
+              style={[s.adminBtn, loading && s.adminBtnDisabled]}
+              onPress={handleAdminLogin}
+              disabled={loading || !email.trim() || !password}
+              activeOpacity={0.7}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={s.adminBtnText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => { setMode('pin'); setError(''); setLoading(false) }}
+            style={s.switchBtn}
+          >
+            <Text style={s.switchText}>← Back to Staff PIN Login</Text>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    )
+  }
+
+  // --- Staff PIN Login View ---
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.container}>
@@ -87,7 +178,12 @@ export default function LoginScreen({ onLogin }) {
           <ActivityIndicator color="#79545c" style={{ marginTop: 24 }} />
         )}
 
-        <Text style={s.hint}>Forgot PIN?</Text>
+        <TouchableOpacity
+          onPress={() => { setMode('admin'); setError(''); setPin('') }}
+          style={s.switchBtn}
+        >
+          <Text style={s.hint}>For Admin Login →</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   )
@@ -104,11 +200,36 @@ const s = StyleSheet.create({
   dots:         { flexDirection: 'row', gap: 24, marginBottom: 16 },
   dot:          { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: '#d3c2c5', backgroundColor: '#efe6e7' },
   dotFilled:    { backgroundColor: '#79545c', borderColor: '#79545c', shadowColor: '#79545c', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 12 },
-  error:        { color: '#ba1a1a', fontSize: 13, marginBottom: 16, fontWeight: '500' },
+  error:        { color: '#ba1a1a', fontSize: 13, marginBottom: 16, fontWeight: '500', textAlign: 'center' },
   keypad:       { flexDirection: 'row', flexWrap: 'wrap', width: 260, gap: 12, marginTop: 32, marginBottom: 32 },
   key:          { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' },
   keyEmpty:     { width: 76, height: 76 },
   keyText:      { fontSize: 28, color: '#1f1a1b', fontWeight: '300' },
   keyBackspace: { fontSize: 22 },
-  hint:         { color: '#79545c', fontSize: 14, fontWeight: '600', marginTop: 16, letterSpacing: 0.5 },
+  hint:         { color: '#79545c', fontSize: 14, fontWeight: '600', letterSpacing: 0.5 },
+  switchBtn:    { marginTop: 16, paddingVertical: 8, paddingHorizontal: 16 },
+  switchText:   { color: '#79545c', fontSize: 14, fontWeight: '600', letterSpacing: 0.5 },
+
+  // Admin form styles
+  formContainer: { width: '100%', maxWidth: 300, gap: 14 },
+  input:        {
+    backgroundColor: '#f5eced',
+    borderWidth: 1,
+    borderColor: 'rgba(121,84,92,0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#1f1a1b',
+  },
+  adminBtn:     {
+    backgroundColor: '#79545c',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  adminBtnDisabled: { opacity: 0.5 },
+  adminBtnText: { color: '#fff', fontSize: 15, fontWeight: '600', letterSpacing: 0.5 },
 })
