@@ -17,6 +17,10 @@ function fmt(n) {
   return n.toLocaleString('en-IN')
 }
 
+function inr(n) {
+  return Math.round(n || 0).toLocaleString('en-IN')
+}
+
 function getDateRange(period) {
   const now = new Date()
   const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
@@ -60,11 +64,18 @@ export default function Staff() {
       ])
       const otPromises = allStaff.map(s => getOTRecord(s.name, weekStart))
       const otResults = await Promise.all(otPromises)
-      const list = allStaff.map((staff, i) => ({
-        ...staff,
-        ...(statsMap[staff.name] || { totalServices: 0, totalRevenue: 0, totalTips: 0, totalProducts: 0, daysWorked: 0 }),
-        otAmount: otResults[i] ? Number(otResults[i].ot_hours) : 0,
-      }))
+
+      const list = allStaff.map((staff, i) => {
+        const stats = statsMap[staff.name] || {
+          totalServices: 0, totalRevenue: 0, totalTips: 0,
+          totalProducts: 0, productCount: 0, daysWorked: 0,
+          targetBonus: 0, productCommission: 0,
+        }
+        const otAmount = otResults[i] ? Number(otResults[i].ot_hours) : 0
+        const salary = Number(staff.monthly_salary || 0)
+        const totalPayout = salary + stats.targetBonus + stats.totalTips + stats.productCommission + otAmount
+        return { ...staff, ...stats, otAmount, totalPayout }
+      })
       list.sort((a, b) => b.totalRevenue - a.totalRevenue)
       setStaffList(list)
     } catch (err) {
@@ -114,7 +125,9 @@ export default function Staff() {
     <div className="min-h-full flex flex-col">
       {/* Sticky period bar */}
       <div className="sticky top-0 z-10 bg-stone-50/95 dark:bg-zinc-950/95 backdrop-blur-sm border-b border-stone-200/80 dark:border-zinc-800/80 px-8 py-3 flex items-center justify-between">
-        <span className="text-stone-900 dark:text-zinc-100 font-medium">Staff ({activeStaff.length})</span>
+        <span className="text-stone-900 dark:text-zinc-100 font-medium">
+          Staff Scorecards <span className="text-stone-400 dark:text-zinc-500 font-normal text-sm">({activeStaff.length} active)</span>
+        </span>
         <div className="flex bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-lg p-1 gap-0.5">
           {PERIODS.map(p => (
             <button
@@ -131,7 +144,7 @@ export default function Staff() {
         </div>
       </div>
 
-      <div className="p-8 max-w-5xl">
+      <div className="p-8">
         {disabledStaff.length > 0 && (
           <div className="flex items-center justify-end mb-4">
             <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -151,66 +164,17 @@ export default function Staff() {
             <p className="text-stone-300 dark:text-zinc-600 text-sm">No staff data</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-            {displayList.map(item => {
-              const isDisabled = !item.active
-              const initial = item.name.charAt(0).toUpperCase()
-              return (
-                <div
-                  key={item.id}
-                  className={`bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 space-y-3
-                    ${isDisabled ? 'opacity-50' : ''}`}
-                >
-                  {/* Header: avatar + name */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500 flex items-center justify-center shrink-0">
-                      <span className="text-lg font-bold text-amber-700 dark:text-[#0f0e0c]">{initial}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-stone-800 dark:text-zinc-200 font-bold truncate">{item.name}</span>
-                        {isDisabled && (
-                          <span className="text-[9px] font-bold text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-400/10 px-1.5 py-0.5 rounded">DISABLED</span>
-                        )}
-                      </div>
-                      <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">
-                        {item.daysWorked} days &middot; {item.totalServices} services
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Stats row */}
-                  <div className="flex gap-2">
-                    <StatPill label="Revenue" value={`₹${fmt(item.totalRevenue)}`} gold />
-                    <StatPill label="Tips" value={`₹${fmt(item.totalTips)}`} />
-                    <StatPill label="Products" value={`₹${fmt(item.totalProducts || 0)}`} />
-                  </div>
-
-                  {/* OT Entry (active only) - only show in 'week' and 'all' views */}
-                  {!isDisabled && (period === 'week' || period === 'all') && (
-                    <div className="flex items-center gap-2 border-t border-stone-100 dark:border-zinc-800 pt-3">
-                      <span className="text-stone-500 dark:text-zinc-400 text-xs flex-1">
-                        OT this week: ₹{item.otAmount.toLocaleString('en-IN')}
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="₹"
-                        value={otInputs[item.name] ?? ''}
-                        onChange={e => setOtInputs(prev => ({ ...prev, [item.name]: e.target.value }))}
-                        className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 w-20 text-sm text-stone-800 dark:text-zinc-200 text-center focus:outline-none focus:border-amber-500/50"
-                      />
-                      <button
-                        onClick={() => handleSaveOT(item.name)}
-                        className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            {displayList.map(item => (
+              <StaffScorecard
+                key={item.id}
+                item={item}
+                period={period}
+                otInput={otInputs[item.name] ?? ''}
+                onOtChange={val => setOtInputs(prev => ({ ...prev, [item.name]: val }))}
+                onSaveOT={() => handleSaveOT(item.name)}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -218,11 +182,123 @@ export default function Staff() {
   )
 }
 
-function StatPill({ label, value, gold }) {
+function StaffScorecard({ item, period, otInput, onOtChange, onSaveOT }) {
+  const isDisabled = !item.active
+  const initial = item.name.charAt(0).toUpperCase()
+  const salary = Number(item.monthly_salary || 0)
+
   return (
-    <div className="flex-1 bg-stone-50 dark:bg-zinc-800 rounded-lg px-2.5 py-2 text-center">
-      <p className="text-stone-400 dark:text-zinc-500 text-[10px] mb-0.5">{label}</p>
-      <p className={`text-xs font-bold ${gold ? 'text-amber-600 dark:text-amber-400' : 'text-stone-800 dark:text-zinc-200'}`}>{value}</p>
+    <div className={`bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl overflow-hidden ${isDisabled ? 'opacity-50' : ''}`}>
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-100 dark:border-zinc-800">
+        <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500 flex items-center justify-center shrink-0">
+          <span className="text-lg font-bold text-amber-700 dark:text-[#0f0e0c]">{initial}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-stone-800 dark:text-zinc-100 font-bold truncate">{item.name}</span>
+            {isDisabled && (
+              <span className="text-[9px] font-bold text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-400/10 px-1.5 py-0.5 rounded">DISABLED</span>
+            )}
+          </div>
+          <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">
+            {item.daysWorked} days worked &middot; {item.totalServices} services
+          </p>
+        </div>
+      </div>
+
+      {/* ── KPI strip ── */}
+      <div className="grid grid-cols-2 divide-x divide-stone-100 dark:divide-zinc-800 border-b border-stone-100 dark:border-zinc-800">
+        <div className="px-5 py-3">
+          <p className="text-stone-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest mb-0.5">Total Revenue</p>
+          <p className="text-stone-900 dark:text-zinc-100 font-bold text-lg tabular-nums">₹{fmt(item.totalRevenue)}</p>
+        </div>
+        <div className="px-5 py-3">
+          <p className="text-stone-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest mb-0.5">Total Payout</p>
+          <p className="text-amber-600 dark:text-amber-400 font-bold text-lg tabular-nums">₹{fmt(item.totalPayout)}</p>
+        </div>
+      </div>
+
+      {/* ── Two-column breakdown ── */}
+      <div className="grid grid-cols-2 divide-x divide-stone-100 dark:divide-zinc-800">
+
+        {/* LEFT — Contributed */}
+        <div className="px-5 py-4 space-y-2.5">
+          <p className="text-[9px] font-bold uppercase tracking-[2px] text-stone-400 dark:text-zinc-500 mb-3">Staff Contributed</p>
+          <Row label="Services" value={`₹${inr(item.totalRevenue)}`} sub={`${item.totalServices} entries`} />
+          <Row label="Tips" value={`₹${inr(item.totalTips)}`} highlight={item.totalTips > 0} />
+          <Row label="Products" value={`${item.productCount} items`} sub={item.totalProducts > 0 ? `₹${inr(item.totalProducts)}` : null} />
+        </div>
+
+        {/* RIGHT — Owner Paid */}
+        <div className="px-5 py-4 space-y-2.5">
+          <p className="text-[9px] font-bold uppercase tracking-[2px] text-stone-400 dark:text-zinc-500 mb-3">Owner Paid</p>
+          <Row
+            label="Salary"
+            value={salary > 0 ? `₹${inr(salary)}/mo` : '—'}
+            muted={salary === 0}
+          />
+          <Row
+            label="Target Bonus"
+            value={`₹${inr(item.targetBonus)}`}
+            highlight={item.targetBonus > 0}
+            sub="10% on days ≥ ₹3k"
+          />
+          <Row
+            label="Tips"
+            value={`₹${inr(item.totalTips)}`}
+            highlight={item.totalTips > 0}
+          />
+          <Row
+            label="Products"
+            value={`₹${inr(item.productCommission)}`}
+            highlight={item.productCommission > 0}
+            sub={item.productCount > 0 ? `${item.productCount} × ₹30` : null}
+          />
+          <Row
+            label="Overtime"
+            value={`₹${inr(item.otAmount)}`}
+            highlight={item.otAmount > 0}
+          />
+        </div>
+      </div>
+
+      {/* ── OT input (active staff only) ── */}
+      {!isDisabled && (
+        <div className="flex items-center gap-2 px-5 py-3 border-t border-stone-100 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-800/30">
+          <span className="text-stone-400 dark:text-zinc-500 text-xs flex-1">Update OT this week</span>
+          <input
+            type="number"
+            min="0"
+            placeholder="₹"
+            value={otInput}
+            onChange={e => onOtChange(e.target.value)}
+            className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 w-24 text-sm text-stone-800 dark:text-zinc-200 text-center focus:outline-none focus:border-amber-500/50"
+          />
+          <button
+            onClick={onSaveOT}
+            className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Row({ label, value, sub, highlight, muted }) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <div>
+        <p className="text-stone-500 dark:text-zinc-400 text-xs">{label}</p>
+        {sub && <p className="text-stone-300 dark:text-zinc-600 text-[10px]">{sub}</p>}
+      </div>
+      <p className={`text-sm font-semibold tabular-nums shrink-0
+        ${highlight ? 'text-amber-600 dark:text-amber-400' : muted ? 'text-stone-300 dark:text-zinc-600' : 'text-stone-800 dark:text-zinc-200'}`}>
+        {value}
+      </p>
     </div>
   )
 }

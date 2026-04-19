@@ -233,6 +233,10 @@ export async function getOTRecord(staffName, weekStart) {
 
 // ─── Batch Stats ────────────────────────────────────────────────────────────
 
+const BONUS_THRESHOLD = 3000
+const BONUS_RATE = 0.10
+const PRODUCT_COMMISSION_PER_ITEM = 30
+
 export async function getAllStaffStatsBatch({ from, to } = {}) {
   let recQ = supabase.from('service_records').select('staff_name, amount, payment_type, entry_type, date')
   let attQ = supabase.from('attendance').select('staff_name, date').not('login_time', 'is', null)
@@ -241,8 +245,18 @@ export async function getAllStaffStatsBatch({ from, to } = {}) {
   const [{ data: records }, { data: attData }] = await Promise.all([recQ, attQ])
 
   const statsMap = {}
+  const dailyRevMap = {} // { staffName: { date: revenue } } for bonus computation
+
   const ensure = name => {
-    if (!statsMap[name]) statsMap[name] = { totalServices: 0, totalRevenue: 0, totalTips: 0, totalProducts: 0, totalCash: 0, totalPaytm: 0, daysWorked: 0, _days: new Set() }
+    if (!statsMap[name]) statsMap[name] = {
+      totalServices: 0, totalRevenue: 0,
+      totalTips: 0,
+      totalProducts: 0, productCount: 0,
+      totalCash: 0, totalPaytm: 0,
+      daysWorked: 0, _days: new Set(),
+      targetBonus: 0, productCommission: 0,
+    }
+    if (!dailyRevMap[name]) dailyRevMap[name] = {}
   }
 
   for (const r of (records || [])) {
@@ -254,9 +268,12 @@ export async function getAllStaffStatsBatch({ from, to } = {}) {
       s.totalRevenue += amt
       if (r.payment_type === 'cash') s.totalCash += amt
       else s.totalPaytm += amt
+      // Track daily revenue for bonus
+      dailyRevMap[r.staff_name][r.date] = (dailyRevMap[r.staff_name][r.date] || 0) + amt
     } else if (r.entry_type === 'tip') {
       s.totalTips += amt
     } else if (r.entry_type === 'product') {
+      s.productCount++
       s.totalProducts += amt
     }
   }
@@ -267,8 +284,15 @@ export async function getAllStaffStatsBatch({ from, to } = {}) {
   }
 
   for (const name of Object.keys(statsMap)) {
-    statsMap[name].daysWorked = statsMap[name]._days.size
-    delete statsMap[name]._days
+    const s = statsMap[name]
+    s.daysWorked = s._days.size
+    delete s._days
+    // Compute target bonus from daily revenue
+    s.targetBonus = Object.values(dailyRevMap[name] || {})
+      .filter(rev => rev >= BONUS_THRESHOLD)
+      .reduce((sum, rev) => sum + Math.round(rev * BONUS_RATE), 0)
+    // Compute product commission
+    s.productCommission = s.productCount * PRODUCT_COMMISSION_PER_ITEM
   }
 
   return statsMap
