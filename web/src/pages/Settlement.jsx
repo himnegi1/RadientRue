@@ -154,130 +154,131 @@ export default function Settlement() {
         </div>
       </div>
 
-      {/* Main layout: table left, summary + OT right */}
-      <div className="flex gap-6 items-start">
+      {/* Single card: table + payout summary together */}
+      <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl overflow-hidden">
 
-        {/* LEFT — Daily breakdown table */}
-        <div className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-stone-200 dark:border-zinc-800">
-            <p className="text-stone-800 dark:text-zinc-200 font-medium">Daily Breakdown</p>
-            <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">{selectedStaff} · {weekLabel}</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-stone-50 dark:bg-zinc-800/60 text-stone-400 dark:text-zinc-500 text-xs uppercase tracking-wide">
-                  <th className="px-5 py-2.5 text-left font-normal">Day</th>
-                  <th className="px-5 py-2.5 text-left font-normal">Date</th>
-                  <th className="px-5 py-2.5 text-right font-normal">Revenue</th>
-                  <th className="px-5 py-2.5 text-right font-normal">Target</th>
-                  <th className="px-5 py-2.5 text-right font-normal">Tips</th>
-                  <th className="px-5 py-2.5 text-right font-normal">Products</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100 dark:divide-zinc-800/50">
-                {dailyBreakdown.map(d => (
-                  <tr key={d.date} className="hover:bg-stone-50 dark:hover:bg-zinc-800/20 transition-colors">
-                    <td className="px-5 py-2.5 text-stone-500 dark:text-zinc-400">{d.day}</td>
-                    <td className="px-5 py-2.5 text-stone-700 dark:text-zinc-300">{d.date}</td>
-                    <td className="px-5 py-2.5 text-right text-stone-800 dark:text-zinc-200 tabular-nums font-medium">
-                      {d.revenue > 0 ? `₹${inr(d.revenue)}` : '—'}
-                    </td>
-                    <td className={`px-5 py-2.5 text-right tabular-nums ${d.target > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-stone-300 dark:text-zinc-600'}`}>
-                      {d.target > 0 ? `₹${inr(d.target)}` : '—'}
-                    </td>
-                    <td className={`px-5 py-2.5 text-right tabular-nums ${d.tips > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-zinc-600'}`}>
-                      {d.tips > 0 ? `₹${inr(d.tips)}` : '—'}
-                    </td>
-                    <td className="px-5 py-2.5 text-right text-stone-500 dark:text-zinc-400 tabular-nums">
-                      {d.products > 0 ? d.products : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-stone-50 dark:bg-zinc-800/50 border-t border-stone-200 dark:border-zinc-700 text-xs font-semibold">
-                  <td className="px-5 py-3 text-stone-500 dark:text-zinc-400" colSpan={2}>Total</td>
-                  <td className="px-5 py-3 text-right text-stone-900 dark:text-zinc-100 tabular-nums">₹{inr(weeklyTotals.totalRevenue)}</td>
-                  <td className="px-5 py-3 text-right text-amber-600 dark:text-amber-400 tabular-nums">₹{inr(weeklyTotals.totalTarget)}</td>
-                  <td className="px-5 py-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">₹{inr(weeklyTotals.totalTips)}</td>
-                  <td className="px-5 py-3 text-right text-stone-700 dark:text-zinc-300 tabular-nums">{weeklyTotals.totalProducts}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+        {/* Table header */}
+        <div className="px-6 py-4 border-b border-stone-200 dark:border-zinc-800">
+          <p className="text-stone-800 dark:text-zinc-200 font-medium">Daily Breakdown</p>
+          <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">{selectedStaff} · {weekLabel}</p>
         </div>
 
-        {/* RIGHT — Summary + OT */}
-        <div className="w-64 shrink-0 space-y-3">
+        {/* Daily rows */}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-stone-50 dark:bg-zinc-800/60 text-stone-400 dark:text-zinc-500 text-xs uppercase tracking-wide">
+              <th className="px-5 py-2.5 text-left font-normal w-12">Day</th>
+              <th className="px-5 py-2.5 text-left font-normal">Date</th>
+              <th className="px-5 py-2.5 text-right font-normal">Revenue</th>
+              <th className="px-5 py-2.5 text-right font-normal">Target</th>
+              <th className="px-5 py-2.5 text-right font-normal">Tips</th>
+              <th className="px-5 py-2.5 text-right font-normal">Products</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-100 dark:divide-zinc-800/50">
+            {dailyBreakdown.map(d => (
+              <tr key={d.date} className="hover:bg-stone-50 dark:hover:bg-zinc-800/20 transition-colors">
+                <td className="px-5 py-2.5 text-stone-500 dark:text-zinc-400">{d.day}</td>
+                <td className="px-5 py-2.5 text-stone-700 dark:text-zinc-300">{d.date}</td>
+                <td className="px-5 py-2.5 text-right text-stone-800 dark:text-zinc-200 tabular-nums font-medium">
+                  {d.revenue > 0 ? `₹${inr(d.revenue)}` : '—'}
+                </td>
+                <td className={`px-5 py-2.5 text-right tabular-nums ${d.target > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-stone-300 dark:text-zinc-600'}`}>
+                  {d.target > 0 ? `₹${inr(d.target)}` : '—'}
+                </td>
+                <td className={`px-5 py-2.5 text-right tabular-nums ${d.tips > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-zinc-600'}`}>
+                  {d.tips > 0 ? `₹${inr(d.tips)}` : '—'}
+                </td>
+                <td className="px-5 py-2.5 text-right text-stone-500 dark:text-zinc-400 tabular-nums">
+                  {d.products > 0 ? d.products : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
 
-          {/* Payout summary cards */}
-          <SummaryCard
-            label="Target"
-            value={`₹${inr(weeklyTotals.totalTarget)}`}
-            sub="10% on days ≥ ₹3k"
-            color="text-amber-600 dark:text-amber-400"
-          />
-          <SummaryCard
-            label="Tips"
-            value={`₹${inr(weeklyTotals.totalTips)}`}
-            sub="All tip entries"
-            color="text-emerald-600 dark:text-emerald-400"
-          />
-          <SummaryCard
-            label="Products"
-            value={`₹${inr(weeklyTotals.productCommission)}`}
-            sub={`${weeklyTotals.totalProducts} × ₹${PRODUCT_COMMISSION}`}
-            color="text-blue-600 dark:text-blue-400"
-          />
+          {/* Weekly totals row */}
+          <tfoot>
+            <tr className="bg-stone-50 dark:bg-zinc-800/50 border-t-2 border-stone-200 dark:border-zinc-700 text-xs font-semibold">
+              <td className="px-5 py-3 text-stone-500 dark:text-zinc-400" colSpan={2}>Week Total</td>
+              <td className="px-5 py-3 text-right text-stone-900 dark:text-zinc-100 tabular-nums">₹{inr(weeklyTotals.totalRevenue)}</td>
+              <td className="px-5 py-3 text-right text-amber-600 dark:text-amber-400 tabular-nums">₹{inr(weeklyTotals.totalTarget)}</td>
+              <td className="px-5 py-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">₹{inr(weeklyTotals.totalTips)}</td>
+              <td className="px-5 py-3 text-right text-stone-700 dark:text-zinc-300 tabular-nums">{weeklyTotals.totalProducts}</td>
+            </tr>
+          </tfoot>
+        </table>
 
-          {/* OT input card */}
-          <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl px-4 py-4">
-            <p className="text-stone-400 dark:text-zinc-500 text-xs mb-1">Overtime</p>
-            <p className="text-purple-600 dark:text-purple-400 font-semibold text-lg tabular-nums mb-3">
-              ₹{inr(weeklyTotals.overtime)}
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min="0"
-                placeholder="₹ amount"
-                value={otInput}
-                onChange={e => setOtInput(e.target.value)}
-                className="flex-1 bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-sm text-stone-800 dark:text-zinc-200 focus:outline-none focus:border-amber-500/50"
-              />
-              <button
-                onClick={handleSaveOT}
-                disabled={savingOT || !otInput}
-                className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 disabled:opacity-40 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-              >
-                {savingOT ? '...' : 'Save'}
-              </button>
-            </div>
+        {/* Payout summary — same width as table, below the fold */}
+        <div className="border-t-2 border-dashed border-stone-200 dark:border-zinc-700">
+          <div className="px-6 py-3 bg-stone-50 dark:bg-zinc-800/40">
+            <p className="text-[10px] font-bold uppercase tracking-[2px] text-stone-400 dark:text-zinc-500">Payout Summary</p>
           </div>
 
-          {/* Total payout */}
-          <div className="bg-white dark:bg-zinc-900 border-2 border-amber-500/40 dark:border-amber-400/30 rounded-xl px-4 py-4">
-            <p className="text-stone-400 dark:text-zinc-500 text-xs mb-1">Total Payout</p>
-            <p className="text-stone-900 dark:text-zinc-100 font-bold text-xl tabular-nums">
-              ₹{inr(weeklyTotals.totalPayout)}
-            </p>
-            <p className="text-stone-300 dark:text-zinc-600 text-xs mt-1">
-              Revenue: ₹{inr(weeklyTotals.totalRevenue)}
-            </p>
-          </div>
+          {/* Summary rows — same column alignment as table */}
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-stone-100 dark:divide-zinc-800/50">
+              <PayoutRow label="Target" sub="10% on days ≥ ₹3k" value={`₹${inr(weeklyTotals.totalTarget)}`} color="text-amber-600 dark:text-amber-400" />
+              <PayoutRow label="Tips" sub="Passed to staff" value={`₹${inr(weeklyTotals.totalTips)}`} color="text-emerald-600 dark:text-emerald-400" />
+              <PayoutRow label="Products" sub={`${weeklyTotals.totalProducts} × ₹${PRODUCT_COMMISSION}`} value={`₹${inr(weeklyTotals.productCommission)}`} color="text-blue-600 dark:text-blue-400" />
+
+              {/* OT row with inline input */}
+              <tr className="hover:bg-stone-50 dark:hover:bg-zinc-800/20 transition-colors">
+                <td className="px-5 py-3" colSpan={2}>
+                  <p className="text-stone-700 dark:text-zinc-300 font-medium text-sm">Overtime</p>
+                  <p className="text-stone-400 dark:text-zinc-500 text-xs">This week's OT</p>
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="₹"
+                      value={otInput}
+                      onChange={e => setOtInput(e.target.value)}
+                      className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1 w-24 text-sm text-stone-800 dark:text-zinc-200 text-right focus:outline-none focus:border-amber-500/50"
+                    />
+                    <button
+                      onClick={handleSaveOT}
+                      disabled={savingOT || !otInput}
+                      className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 disabled:opacity-40 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      {savingOT ? '...' : 'Save'}
+                    </button>
+                    <span className="text-purple-600 dark:text-purple-400 font-semibold tabular-nums min-w-[60px] text-right">
+                      ₹{inr(weeklyTotals.overtime)}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+
+            {/* Total payout footer */}
+            <tfoot>
+              <tr className="bg-amber-50 dark:bg-amber-900/10 border-t-2 border-amber-200 dark:border-amber-500/30">
+                <td className="px-5 py-4" colSpan={2}>
+                  <p className="text-stone-700 dark:text-zinc-300 font-bold text-sm">Total Payout</p>
+                  <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">Revenue: ₹{inr(weeklyTotals.totalRevenue)}</p>
+                </td>
+                <td className="px-5 py-4 text-right">
+                  <p className="text-amber-600 dark:text-amber-400 font-bold text-xl tabular-nums">₹{inr(weeklyTotals.totalPayout)}</p>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </div>
   )
 }
 
-function SummaryCard({ label, value, sub, color = 'text-stone-900 dark:text-zinc-100' }) {
+function PayoutRow({ label, sub, value, color }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-xl px-4 py-3.5 border border-stone-200 dark:border-zinc-800">
-      <p className="text-stone-400 dark:text-zinc-500 text-xs mb-1">{label}</p>
-      <p className={`text-lg font-semibold tabular-nums mb-0.5 ${color}`}>{value}</p>
-      {sub && <p className="text-stone-300 dark:text-zinc-600 text-xs">{sub}</p>}
-    </div>
+    <tr className="hover:bg-stone-50 dark:hover:bg-zinc-800/20 transition-colors">
+      <td className="px-5 py-3" colSpan={2}>
+        <p className="text-stone-700 dark:text-zinc-300 font-medium text-sm">{label}</p>
+        {sub && <p className="text-stone-400 dark:text-zinc-500 text-xs">{sub}</p>}
+      </td>
+      <td className={`px-5 py-3 text-right font-semibold tabular-nums ${color}`}>{value}</td>
+    </tr>
   )
 }
