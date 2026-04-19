@@ -169,10 +169,10 @@ export default function Settlement() {
             <tr className="bg-stone-50 dark:bg-zinc-800/60 text-stone-400 dark:text-zinc-500 text-xs uppercase tracking-wide">
               <th className="px-5 py-2.5 text-left font-normal w-12">Day</th>
               <th className="px-5 py-2.5 text-left font-normal">Date</th>
-              <th className="px-5 py-2.5 text-right font-normal">Revenue</th>
               <th className="px-5 py-2.5 text-right font-normal">Target</th>
               <th className="px-5 py-2.5 text-right font-normal">Tips</th>
               <th className="px-5 py-2.5 text-right font-normal">Products</th>
+              <th className="px-5 py-2.5 text-right font-normal">Overtime</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100 dark:divide-zinc-800/50">
@@ -180,9 +180,6 @@ export default function Settlement() {
               <tr key={d.date} className="hover:bg-stone-50 dark:hover:bg-zinc-800/20 transition-colors">
                 <td className="px-5 py-2.5 text-stone-500 dark:text-zinc-400">{d.day}</td>
                 <td className="px-5 py-2.5 text-stone-700 dark:text-zinc-300">{d.date}</td>
-                <td className="px-5 py-2.5 text-right text-stone-800 dark:text-zinc-200 tabular-nums font-medium">
-                  {d.revenue > 0 ? `₹${inr(d.revenue)}` : '—'}
-                </td>
                 <td className={`px-5 py-2.5 text-right tabular-nums ${d.target > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-stone-300 dark:text-zinc-600'}`}>
                   {d.target > 0 ? `₹${inr(d.target)}` : '—'}
                 </td>
@@ -192,6 +189,7 @@ export default function Settlement() {
                 <td className="px-5 py-2.5 text-right text-stone-500 dark:text-zinc-400 tabular-nums">
                   {d.products > 0 ? d.products : '—'}
                 </td>
+                <td className="px-5 py-2.5 text-right text-stone-300 dark:text-zinc-600 tabular-nums">—</td>
               </tr>
             ))}
           </tbody>
@@ -200,10 +198,10 @@ export default function Settlement() {
           <tfoot>
             <tr className="bg-stone-50 dark:bg-zinc-800/50 border-t-2 border-stone-200 dark:border-zinc-700 text-xs font-semibold">
               <td className="px-5 py-3 text-stone-500 dark:text-zinc-400" colSpan={2}>Week Total</td>
-              <td className="px-5 py-3 text-right text-stone-900 dark:text-zinc-100 tabular-nums">₹{inr(weeklyTotals.totalRevenue)}</td>
               <td className="px-5 py-3 text-right text-amber-600 dark:text-amber-400 tabular-nums">₹{inr(weeklyTotals.totalTarget)}</td>
               <td className="px-5 py-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">₹{inr(weeklyTotals.totalTips)}</td>
               <td className="px-5 py-3 text-right text-stone-700 dark:text-zinc-300 tabular-nums">{weeklyTotals.totalProducts}</td>
+              <td className="px-5 py-3 text-right text-purple-600 dark:text-purple-400 tabular-nums">₹{inr(weeklyTotals.overtime)}</td>
             </tr>
           </tfoot>
         </table>

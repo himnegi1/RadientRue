@@ -33,7 +33,6 @@ export default function ServiceLog() {
         const names = new Set(staff.map(s => s.name))
         setActiveNames(names)
         setHasDisabled(recs.some(r => !names.has(r.staff_name)))
-        // Collect all unique staff names that appear in records
         const uniqueNames = [...new Set(recs.map(r => r.staff_name))].sort()
         setAllStaffNames(uniqueNames)
       } catch (err) {
@@ -45,29 +44,32 @@ export default function ServiceLog() {
     load()
   }, [])
 
-  // Group by date, apply filters
+  // Group by date, apply all filters
   const sections = useMemo(() => {
     let filtered = records
-    if (filter !== 'all') {
-      filtered = filtered.filter(r => r.entry_type === filter)
-    }
-    if (selectedStaff !== 'all') {
-      filtered = filtered.filter(r => r.staff_name === selectedStaff)
-    }
-    if (!showDisabled) {
-      filtered = filtered.filter(r => activeNames.has(r.staff_name))
-    }
+    if (filter !== 'all') filtered = filtered.filter(r => r.entry_type === filter)
+    if (selectedStaff !== 'all') filtered = filtered.filter(r => r.staff_name === selectedStaff)
+    if (!showDisabled) filtered = filtered.filter(r => activeNames.has(r.staff_name))
 
     const grouped = {}
     for (const r of filtered) {
       if (!grouped[r.date]) grouped[r.date] = []
       grouped[r.date].push(r)
     }
-
     return Object.entries(grouped)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([date, data]) => ({ date, data }))
-  }, [records, filter, showDisabled, activeNames])
+  }, [records, filter, selectedStaff, showDisabled, activeNames]) // ← selectedStaff added
+
+  // Overall totals across all visible sections
+  const overallTotals = useMemo(() => {
+    const allEntries = sections.flatMap(s => s.data)
+    const totalEntries = allEntries.length
+    const totalAmount = allEntries
+      .filter(r => r.entry_type === 'service')
+      .reduce((s, r) => s + Number(r.amount), 0)
+    return { totalEntries, totalAmount }
+  }, [sections])
 
   if (loading) {
     return (
@@ -100,8 +102,7 @@ export default function ServiceLog() {
       <h1 className="font-serif text-2xl text-stone-900 dark:text-zinc-100 mb-4">Service Log</h1>
 
       {/* Filter row */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        {/* Staff dropdown */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <select
           value={selectedStaff}
           onChange={e => setSelectedStaff(e.target.value)}
@@ -113,7 +114,6 @@ export default function ServiceLog() {
           ))}
         </select>
 
-        {/* Entry type pills */}
         <div className="flex gap-2">
           {FILTERS.map(f => (
             <button
@@ -129,6 +129,7 @@ export default function ServiceLog() {
             </button>
           ))}
         </div>
+
         {hasDisabled && (
           <label className="flex items-center gap-2 cursor-pointer select-none ml-auto">
             <span className="text-stone-500 dark:text-zinc-400 text-sm">Show disabled staff</span>
@@ -142,6 +143,28 @@ export default function ServiceLog() {
         )}
       </div>
 
+      {/* Overall summary strip */}
+      {sections.length > 0 && (
+        <div className="flex items-center gap-6 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl px-5 py-3 mb-5">
+          <div>
+            <p className="text-stone-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">Total Entries</p>
+            <p className="text-stone-900 dark:text-zinc-100 font-bold text-lg">{overallTotals.totalEntries}</p>
+          </div>
+          <div className="w-px h-8 bg-stone-200 dark:bg-zinc-700" />
+          <div>
+            <p className="text-stone-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">Total Revenue</p>
+            <p className="text-amber-600 dark:text-amber-400 font-bold text-lg tabular-nums">
+              ₹{overallTotals.totalAmount.toLocaleString('en-IN')}
+            </p>
+          </div>
+          <div className="w-px h-8 bg-stone-200 dark:bg-zinc-700" />
+          <div>
+            <p className="text-stone-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">Days</p>
+            <p className="text-stone-900 dark:text-zinc-100 font-bold text-lg">{sections.length}</p>
+          </div>
+        </div>
+      )}
+
       {sections.length === 0 ? (
         <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl p-12 text-center">
           <p className="text-stone-300 dark:text-zinc-600 text-sm">No entries</p>
@@ -153,13 +176,18 @@ export default function ServiceLog() {
             const sectionRevenue = svcRecords.reduce((s, r) => s + Number(r.amount), 0)
             return (
               <div key={section.date}>
-                {/* Date header */}
+                {/* Date header with daily totals */}
                 <div className="flex items-center justify-between py-2.5 mt-3">
                   <span className="text-stone-800 dark:text-zinc-200 text-sm font-bold">{formatDate(section.date)}</span>
-                  <span className="text-stone-400 dark:text-zinc-500 text-xs">
-                    {section.data.length} entries &middot; ₹{sectionRevenue.toLocaleString('en-IN')}
-                  </span>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-stone-400 dark:text-zinc-500">{section.data.length} entries</span>
+                    <span className="text-stone-300 dark:text-zinc-700">·</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold tabular-nums">
+                      ₹{sectionRevenue.toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
+
                 {/* Entries */}
                 {section.data.map(item => {
                   const isDisabledStaff = !activeNames.has(item.staff_name)
