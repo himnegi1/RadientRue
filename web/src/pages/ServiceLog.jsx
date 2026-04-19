@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getServiceRecords, getStaffList } from '../lib/storage.js'
+import { getServiceRecords, getStaffList, saveServiceRecord, getISTDate } from '../lib/storage.js'
 
 const FILTERS = [
   { key: 'all',     label: 'All' },
@@ -24,6 +24,19 @@ export default function ServiceLog() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Manual entry form
+  const [showForm, setShowForm] = useState(false)
+  const [activeStaffList, setActiveStaffList] = useState([])
+  const [form, setForm] = useState({
+    staff_name: '',
+    date: '',
+    entry_type: 'service',
+    payment_type: 'cash',
+    amount: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState(null)
+
   useEffect(() => {
     async function load() {
       try {
@@ -32,6 +45,8 @@ export default function ServiceLog() {
         setRecords(recs)
         const names = new Set(staff.map(s => s.name))
         setActiveNames(names)
+        setActiveStaffList(staff)
+        setForm(f => ({ ...f, date: getISTDate(), staff_name: staff[0]?.name ?? '' }))
         setHasDisabled(recs.some(r => !names.has(r.staff_name)))
         const uniqueNames = [...new Set(recs.map(r => r.staff_name))].sort()
         setAllStaffNames(uniqueNames)
@@ -71,6 +86,34 @@ export default function ServiceLog() {
     return { totalEntries, totalAmount }
   }, [sections])
 
+  async function handleSaveEntry(e) {
+    e.preventDefault()
+    if (!form.staff_name || !form.date || !form.amount) return
+    setSaving(true)
+    setSaveMsg(null)
+    try {
+      const now = new Date().toTimeString().slice(0, 8)
+      const record = {
+        staff_name: form.staff_name,
+        date: form.date,
+        time: now,
+        amount: Number(form.amount),
+        entry_type: form.entry_type,
+        payment_type: form.payment_type === 'online' ? 'paytm' : form.payment_type,
+        source: 'manual',
+      }
+      const saved = await saveServiceRecord(record)
+      setRecords(prev => [saved, ...prev])
+      setSaveMsg('Entry saved')
+      setForm(f => ({ ...f, amount: '' }))
+      setTimeout(() => setSaveMsg(null), 3000)
+    } catch (err) {
+      setSaveMsg('Error: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -99,7 +142,126 @@ export default function ServiceLog() {
 
   return (
     <div className="p-8 max-w-5xl">
-      <h1 className="font-serif text-2xl text-stone-900 dark:text-zinc-100 mb-4">Service Log</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="font-serif text-2xl text-stone-900 dark:text-zinc-100">Service Log</h1>
+        <button
+          onClick={() => setShowForm(v => !v)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold transition-colors"
+        >
+          <span className="text-lg leading-none">{showForm ? '×' : '+'}</span>
+          {showForm ? 'Cancel' : 'Add Entry'}
+        </button>
+      </div>
+
+      {/* Manual entry form */}
+      {showForm && (
+        <form
+          onSubmit={handleSaveEntry}
+          className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-xl p-5 mb-5 space-y-4"
+        >
+          <p className="text-stone-500 dark:text-zinc-400 text-xs uppercase tracking-widest font-semibold">Manual Entry</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {/* Staff */}
+            <div className="flex flex-col gap-1">
+              <label className="text-stone-500 dark:text-zinc-400 text-xs">Staff</label>
+              <select
+                value={form.staff_name}
+                onChange={e => setForm(f => ({ ...f, staff_name: e.target.value }))}
+                required
+                className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-sm px-3 py-2 rounded-md"
+              >
+                {activeStaffList.map(s => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date */}
+            <div className="flex flex-col gap-1">
+              <label className="text-stone-500 dark:text-zinc-400 text-xs">Date</label>
+              <input
+                type="date"
+                value={form.date}
+                max={getISTDate()}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                required
+                className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-sm px-3 py-2 rounded-md"
+              />
+            </div>
+
+            {/* Amount */}
+            <div className="flex flex-col gap-1">
+              <label className="text-stone-500 dark:text-zinc-400 text-xs">Amount (₹)</label>
+              <input
+                type="number"
+                min="1"
+                placeholder="e.g. 500"
+                value={form.amount}
+                onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                required
+                className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-sm px-3 py-2 rounded-md"
+              />
+            </div>
+
+            {/* Entry type */}
+            <div className="flex flex-col gap-1">
+              <label className="text-stone-500 dark:text-zinc-400 text-xs">Type</label>
+              <div className="flex gap-2">
+                {['service', 'tip', 'product'].map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, entry_type: t }))}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold border transition-colors capitalize
+                      ${form.entry_type === t
+                        ? 'bg-amber-100 dark:bg-amber-400/15 border-amber-500 dark:border-amber-400 text-amber-700 dark:text-amber-400'
+                        : 'border-stone-200 dark:border-zinc-700 text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-500'
+                      }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment type */}
+            <div className="flex flex-col gap-1">
+              <label className="text-stone-500 dark:text-zinc-400 text-xs">Payment</label>
+              <div className="flex gap-2">
+                {['cash', 'online'].map(p => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, payment_type: p }))}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold border transition-colors capitalize
+                      ${form.payment_type === p
+                        ? 'bg-amber-100 dark:bg-amber-400/15 border-amber-500 dark:border-amber-400 text-amber-700 dark:text-amber-400'
+                        : 'border-stone-200 dark:border-zinc-700 text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-500'
+                      }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
+            >
+              {saving ? 'Saving…' : 'Save Entry'}
+            </button>
+            {saveMsg && (
+              <span className={`text-sm ${saveMsg.startsWith('Error') ? 'text-red-400' : 'text-emerald-500'}`}>
+                {saveMsg}
+              </span>
+            )}
+          </div>
+        </form>
+      )}
 
       {/* Filter row */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
