@@ -4,6 +4,22 @@
 
 ---
 
+## 🚨 PRODUCTION — BACKWARD COMPATIBILITY REQUIRED
+
+**This app is LIVE.** The mobile app is published on Google Play Store and the web dashboard is deployed at https://radientrue.netlify.app. Real users are using it with real business data in Supabase.
+
+**Every change MUST:**
+1. Preserve existing user data — never run destructive SQL (DELETE/DROP/TRUNCATE/drop-column) against production Supabase without explicit user confirmation.
+2. Be backward compatible — existing users on older app versions must keep working. Don't rename/remove Supabase columns or tables that older clients read or write.
+3. Schema changes must be **additive** (add nullable column first, backfill, make NOT NULL later in a separate release).
+4. Storage keys, route names, and auth flows are part of the contract — don't rename them.
+5. Deploy Supabase migrations BEFORE shipping the client that depends on them.
+6. Test locally (`npm run build` for web, preview APK for mobile) before pushing a production release.
+
+Never assume a "small change" is safe — ask yourself: would this break a staff member mid-shift on an older APK, or the owner's historical reports?
+
+---
+
 ## 🏠 Business Context
 
 **Salon name:** Radiant Rue
