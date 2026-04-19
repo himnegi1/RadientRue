@@ -233,11 +233,12 @@ export async function getOTRecord(staffName, weekStart) {
 
 // ─── Batch Stats ────────────────────────────────────────────────────────────
 
-export async function getAllStaffStatsBatch() {
-  const [{ data: records }, { data: attData }] = await Promise.all([
-    supabase.from('service_records').select('staff_name, amount, payment_type, entry_type'),
-    supabase.from('attendance').select('staff_name, date').not('login_time', 'is', null),
-  ])
+export async function getAllStaffStatsBatch({ from, to } = {}) {
+  let recQ = supabase.from('service_records').select('staff_name, amount, payment_type, entry_type, date')
+  let attQ = supabase.from('attendance').select('staff_name, date').not('login_time', 'is', null)
+  if (from) { recQ = recQ.gte('date', from); attQ = attQ.gte('date', from) }
+  if (to)   { recQ = recQ.lte('date', to);   attQ = attQ.lte('date', to) }
+  const [{ data: records }, { data: attData }] = await Promise.all([recQ, attQ])
 
   const statsMap = {}
   const ensure = name => {

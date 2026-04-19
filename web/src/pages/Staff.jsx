@@ -3,11 +3,41 @@ import {
   getAllStaff, getAllStaffStatsBatch, saveOTRecord, getOTRecord, getWeekStart, getISTDate,
 } from '../lib/storage.js'
 
+const PERIODS = [
+  { key: 'today', label: 'Today' },
+  { key: 'week',  label: 'This Week' },
+  { key: 'month', label: 'This Month' },
+  { key: 'all',   label: 'All Time' },
+]
+
 function fmt(n) {
   n = Math.round(n || 0)
   if (n >= 100000) return (n / 100000).toFixed(1) + 'L'
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
   return n.toLocaleString('en-IN')
+}
+
+function getDateRange(period) {
+  const now = new Date()
+  const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+  if (period === 'today') return { from: today, to: today }
+  if (period === 'week') {
+    const d = new Date(today + 'T12:00:00')
+    const day = d.getDay()
+    const diff = day === 0 ? 6 : day - 1
+    const start = new Date(d)
+    start.setDate(start.getDate() - diff)
+    const end = new Date(start)
+    end.setDate(end.getDate() + 6)
+    const f = dt => dt.toISOString().slice(0, 10)
+    return { from: f(start), to: f(end) }
+  }
+  if (period === 'month') {
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    return { from: `${y}-${m}-01`, to: `${y}-${m}-31` }
+  }
+  return {}
 }
 
 export default function Staff() {
@@ -16,15 +46,17 @@ export default function Staff() {
   const [error, setError] = useState(null)
   const [showDisabled, setShowDisabled] = useState(false)
   const [otInputs, setOtInputs] = useState({})
+  const [period, setPeriod] = useState('all')
 
   const weekStart = getWeekStart(getISTDate())
 
   const loadStaff = useCallback(async () => {
     try {
       setLoading(true)
+      const range = getDateRange(period)
       const [allStaff, statsMap] = await Promise.all([
         getAllStaff(),
-        getAllStaffStatsBatch(),
+        getAllStaffStatsBatch(range),
       ])
       const otPromises = allStaff.map(s => getOTRecord(s.name, weekStart))
       const otResults = await Promise.all(otPromises)
@@ -40,7 +72,7 @@ export default function Staff() {
     } finally {
       setLoading(false)
     }
-  }, [weekStart])
+  }, [weekStart, period])
 
   useEffect(() => { loadStaff() }, [loadStaff])
 
@@ -79,89 +111,109 @@ export default function Staff() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-serif text-2xl text-stone-900 dark:text-zinc-100">Staff ({activeStaff.length})</h1>
-        {disabledStaff.length > 0 && (
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <span className="text-stone-500 dark:text-zinc-400 text-sm">Show disabled</span>
+    <div className="min-h-full flex flex-col">
+      {/* Sticky period bar */}
+      <div className="sticky top-0 z-10 bg-stone-50/95 dark:bg-zinc-950/95 backdrop-blur-sm border-b border-stone-200/80 dark:border-zinc-800/80 px-8 py-3 flex items-center justify-between">
+        <span className="text-stone-900 dark:text-zinc-100 font-medium">Staff ({activeStaff.length})</span>
+        <div className="flex bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-lg p-1 gap-0.5">
+          {PERIODS.map(p => (
             <button
-              onClick={() => setShowDisabled(v => !v)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${showDisabled ? 'bg-amber-500/40' : 'bg-stone-200 dark:bg-zinc-700'}`}
+              key={p.key}
+              onClick={() => setPeriod(p.key)}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors
+                ${period === p.key
+                  ? 'bg-stone-200 dark:bg-zinc-700 text-stone-900 dark:text-zinc-100'
+                  : 'text-stone-400 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300'}`}
             >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform ${showDisabled ? 'translate-x-5 bg-amber-500 dark:bg-amber-400' : 'bg-stone-400 dark:bg-zinc-500'}`} />
+              {p.label}
             </button>
-          </label>
-        )}
+          ))}
+        </div>
       </div>
 
-      {displayList.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl p-12 text-center">
-          <p className="text-stone-300 dark:text-zinc-600 text-sm">No staff data</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-          {displayList.map(item => {
-            const isDisabled = !item.active
-            const initial = item.name.charAt(0).toUpperCase()
-            return (
-              <div
-                key={item.id}
-                className={`bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 space-y-3
-                  ${isDisabled ? 'opacity-50' : ''}`}
+      <div className="p-8 max-w-5xl">
+        {disabledStaff.length > 0 && (
+          <div className="flex items-center justify-end mb-4">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <span className="text-stone-500 dark:text-zinc-400 text-sm">Show disabled</span>
+              <button
+                onClick={() => setShowDisabled(v => !v)}
+                className={`relative w-10 h-5 rounded-full transition-colors ${showDisabled ? 'bg-amber-500/40' : 'bg-stone-200 dark:bg-zinc-700'}`}
               >
-                {/* Header: avatar + name */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500 flex items-center justify-center shrink-0">
-                    <span className="text-lg font-bold text-amber-700 dark:text-[#0f0e0c]">{initial}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-stone-800 dark:text-zinc-200 font-bold truncate">{item.name}</span>
-                      {isDisabled && (
-                        <span className="text-[9px] font-bold text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-400/10 px-1.5 py-0.5 rounded">DISABLED</span>
-                      )}
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform ${showDisabled ? 'translate-x-5 bg-amber-500 dark:bg-amber-400' : 'bg-stone-400 dark:bg-zinc-500'}`} />
+              </button>
+            </label>
+          </div>
+        )}
+
+        {displayList.length === 0 ? (
+          <div className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-xl p-12 text-center">
+            <p className="text-stone-300 dark:text-zinc-600 text-sm">No staff data</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            {displayList.map(item => {
+              const isDisabled = !item.active
+              const initial = item.name.charAt(0).toUpperCase()
+              return (
+                <div
+                  key={item.id}
+                  className={`bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-2xl p-5 space-y-3
+                    ${isDisabled ? 'opacity-50' : ''}`}
+                >
+                  {/* Header: avatar + name */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500 flex items-center justify-center shrink-0">
+                      <span className="text-lg font-bold text-amber-700 dark:text-[#0f0e0c]">{initial}</span>
                     </div>
-                    <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">
-                      {item.daysWorked} days &middot; {item.totalServices} services
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-stone-800 dark:text-zinc-200 font-bold truncate">{item.name}</span>
+                        {isDisabled && (
+                          <span className="text-[9px] font-bold text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-400/10 px-1.5 py-0.5 rounded">DISABLED</span>
+                        )}
+                      </div>
+                      <p className="text-stone-400 dark:text-zinc-500 text-xs mt-0.5">
+                        {item.daysWorked} days &middot; {item.totalServices} services
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Stats row */}
-                <div className="flex gap-2">
-                  <StatPill label="Revenue" value={`₹${fmt(item.totalRevenue)}`} gold />
-                  <StatPill label="Tips" value={`₹${fmt(item.totalTips)}`} />
-                  <StatPill label="Products" value={`₹${fmt(item.totalProducts || 0)}`} />
-                </div>
-
-                {/* OT Entry (active only) */}
-                {!isDisabled && (
-                  <div className="flex items-center gap-2 border-t border-stone-100 dark:border-zinc-800 pt-3">
-                    <span className="text-stone-500 dark:text-zinc-400 text-xs flex-1">
-                      OT this week: ₹{item.otAmount.toLocaleString('en-IN')}
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="₹"
-                      value={otInputs[item.name] ?? ''}
-                      onChange={e => setOtInputs(prev => ({ ...prev, [item.name]: e.target.value }))}
-                      className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 w-20 text-sm text-stone-800 dark:text-zinc-200 text-center focus:outline-none focus:border-amber-500/50"
-                    />
-                    <button
-                      onClick={() => handleSaveOT(item.name)}
-                      className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      Save
-                    </button>
+                  {/* Stats row */}
+                  <div className="flex gap-2">
+                    <StatPill label="Revenue" value={`₹${fmt(item.totalRevenue)}`} gold />
+                    <StatPill label="Tips" value={`₹${fmt(item.totalTips)}`} />
+                    <StatPill label="Products" value={`₹${fmt(item.totalProducts || 0)}`} />
                   </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+
+                  {/* OT Entry (active only) - only show in 'week' and 'all' views */}
+                  {!isDisabled && (period === 'week' || period === 'all') && (
+                    <div className="flex items-center gap-2 border-t border-stone-100 dark:border-zinc-800 pt-3">
+                      <span className="text-stone-500 dark:text-zinc-400 text-xs flex-1">
+                        OT this week: ₹{item.otAmount.toLocaleString('en-IN')}
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="₹"
+                        value={otInputs[item.name] ?? ''}
+                        onChange={e => setOtInputs(prev => ({ ...prev, [item.name]: e.target.value }))}
+                        className="bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 w-20 text-sm text-stone-800 dark:text-zinc-200 text-center focus:outline-none focus:border-amber-500/50"
+                      />
+                      <button
+                        onClick={() => handleSaveOT(item.name)}
+                        className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
