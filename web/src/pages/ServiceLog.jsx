@@ -18,6 +18,8 @@ export default function ServiceLog() {
   const [activeNames, setActiveNames] = useState(new Set())
   const [hasDisabled, setHasDisabled] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [selectedStaff, setSelectedStaff] = useState('all')
+  const [allStaffNames, setAllStaffNames] = useState([])
   const [showDisabled, setShowDisabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -31,6 +33,9 @@ export default function ServiceLog() {
         const names = new Set(staff.map(s => s.name))
         setActiveNames(names)
         setHasDisabled(recs.some(r => !names.has(r.staff_name)))
+        // Collect all unique staff names that appear in records
+        const uniqueNames = [...new Set(recs.map(r => r.staff_name))].sort()
+        setAllStaffNames(uniqueNames)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -45,6 +50,9 @@ export default function ServiceLog() {
     let filtered = records
     if (filter !== 'all') {
       filtered = filtered.filter(r => r.entry_type === filter)
+    }
+    if (selectedStaff !== 'all') {
+      filtered = filtered.filter(r => r.staff_name === selectedStaff)
     }
     if (!showDisabled) {
       filtered = filtered.filter(r => activeNames.has(r.staff_name))
@@ -93,6 +101,19 @@ export default function ServiceLog() {
 
       {/* Filter row */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
+        {/* Staff dropdown */}
+        <select
+          value={selectedStaff}
+          onChange={e => setSelectedStaff(e.target.value)}
+          className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-sm px-3 py-2 rounded-md"
+        >
+          <option value="all">All Staff</option>
+          {allStaffNames.map(name => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
+
+        {/* Entry type pills */}
         <div className="flex gap-2">
           {FILTERS.map(f => (
             <button
