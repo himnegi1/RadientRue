@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getAllStaff, getAllStaffStatsBatch, saveOTRecord, getOTRecord, getWeekStart, getISTDate,
+  getAllStaff, getAllStaffStatsBatch, getOTRecord, getWeekStart, getISTDate,
 } from '../lib/storage.js'
 
 const PERIODS = [
@@ -49,7 +49,6 @@ export default function Staff() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showDisabled, setShowDisabled] = useState(false)
-  const [otInputs, setOtInputs] = useState({})
   const [period, setPeriod] = useState('all')
 
   const weekStart = getWeekStart(getISTDate())
@@ -86,19 +85,6 @@ export default function Staff() {
   }, [weekStart, period])
 
   useEffect(() => { loadStaff() }, [loadStaff])
-
-  async function handleSaveOT(staffName) {
-    const val = parseFloat(otInputs[staffName])
-    if (isNaN(val) || val < 0) return
-    try {
-      await saveOTRecord(staffName, weekStart, val)
-      setOtInputs(prev => ({ ...prev, [staffName]: undefined }))
-      window.alert(`OT saved: ₹${val} for ${staffName}`)
-      loadStaff()
-    } catch (err) {
-      setError(err.message)
-    }
-  }
 
   const activeStaff = staffList.filter(s => s.active)
   const disabledStaff = staffList.filter(s => !s.active)
@@ -169,10 +155,6 @@ export default function Staff() {
               <StaffScorecard
                 key={item.id}
                 item={item}
-                period={period}
-                otInput={otInputs[item.name] ?? ''}
-                onOtChange={val => setOtInputs(prev => ({ ...prev, [item.name]: val }))}
-                onSaveOT={() => handleSaveOT(item.name)}
               />
             ))}
           </div>
@@ -182,7 +164,7 @@ export default function Staff() {
   )
 }
 
-function StaffScorecard({ item, period, otInput, onOtChange, onSaveOT }) {
+function StaffScorecard({ item }) {
   const isDisabled = !item.active
   const initial = item.name.charAt(0).toUpperCase()
   const salary = Number(item.monthly_salary || 0)
@@ -240,7 +222,7 @@ function StaffScorecard({ item, period, otInput, onOtChange, onSaveOT }) {
             muted={salary === 0}
           />
           <Row
-            label="Target Bonus"
+            label="Target"
             value={`₹${inr(item.targetBonus)}`}
             highlight={item.targetBonus > 0}
             sub="10% on days ≥ ₹3k"
@@ -264,26 +246,6 @@ function StaffScorecard({ item, period, otInput, onOtChange, onSaveOT }) {
         </div>
       </div>
 
-      {/* ── OT input (active staff only) ── */}
-      {!isDisabled && (
-        <div className="flex items-center gap-2 px-5 py-3 border-t border-stone-100 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-800/30">
-          <span className="text-stone-400 dark:text-zinc-500 text-xs flex-1">Update OT this week</span>
-          <input
-            type="number"
-            min="0"
-            placeholder="₹"
-            value={otInput}
-            onChange={e => onOtChange(e.target.value)}
-            className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 w-24 text-sm text-stone-800 dark:text-zinc-200 text-center focus:outline-none focus:border-amber-500/50"
-          />
-          <button
-            onClick={onSaveOT}
-            className="bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-          >
-            Save
-          </button>
-        </div>
-      )}
     </div>
   )
 }
