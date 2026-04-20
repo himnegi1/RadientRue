@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getServiceRecords, getStaffList, saveServiceRecord, getISTDate } from '../lib/storage.js'
+import { getServiceRecords, getStaffList, saveServiceRecord, deleteServiceRecord, getISTDate } from '../lib/storage.js'
 
 const FILTERS = [
   { key: 'all',     label: 'All' },
@@ -36,6 +36,7 @@ export default function ServiceLog() {
   })
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -76,13 +77,11 @@ export default function ServiceLog() {
       .map(([date, data]) => ({ date, data }))
   }, [records, filter, selectedStaff, showDisabled, activeNames]) // ← selectedStaff added
 
-  // Overall totals across all visible sections
+  // Overall totals across all visible sections — respects active filter
   const overallTotals = useMemo(() => {
     const allEntries = sections.flatMap(s => s.data)
     const totalEntries = allEntries.length
-    const totalAmount = allEntries
-      .filter(r => r.entry_type === 'service')
-      .reduce((s, r) => s + Number(r.amount), 0)
+    const totalAmount = allEntries.reduce((s, r) => s + Number(r.amount), 0)
     return { totalEntries, totalAmount }
   }, [sections])
 
@@ -111,6 +110,19 @@ export default function ServiceLog() {
       setSaveMsg('Error: ' + err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this entry?')) return
+    setDeletingId(id)
+    try {
+      await deleteServiceRecord(id)
+      setRecords(prev => prev.filter(r => r.id !== id))
+    } catch (err) {
+      alert('Delete failed: ' + err.message)
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -334,8 +346,7 @@ export default function ServiceLog() {
       ) : (
         <div className="space-y-1">
           {sections.map(section => {
-            const svcRecords = section.data.filter(d => d.entry_type === 'service')
-            const sectionRevenue = svcRecords.reduce((s, r) => s + Number(r.amount), 0)
+            const sectionRevenue = section.data.reduce((s, r) => s + Number(r.amount), 0)
             return (
               <div key={section.date}>
                 {/* Date header with daily totals */}
@@ -379,6 +390,14 @@ export default function ServiceLog() {
                       <span className="text-stone-900 dark:text-zinc-100 font-bold text-sm tabular-nums min-w-[60px] text-right">
                         ₹{Number(item.amount).toLocaleString('en-IN')}
                       </span>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deletingId === item.id}
+                        className="ml-2 text-stone-300 dark:text-zinc-600 hover:text-red-400 dark:hover:text-red-400 disabled:opacity-40 transition-colors"
+                        title="Delete entry"
+                      >
+                        {deletingId === item.id ? '…' : '✕'}
+                      </button>
                     </div>
                   )
                 })}
