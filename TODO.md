@@ -37,6 +37,18 @@ Staff login/logout should verify the device is physically near the salon.
 
 ---
 
+### #4 — Mobile Responsiveness (Web)
+The web dashboard does not display properly on mobile screen sizes — layout uses fixed/absolute sizing instead of responsive units.
+- Audit all pages for fixed pixel widths, absolute positioning, and non-responsive layouts
+- Switch to relative units (%, vw, rem) and Tailwind responsive prefixes (`sm:`, `md:`, `lg:`)
+- Sidebar: collapse to bottom nav or hamburger menu on small screens
+- Tables: make horizontally scrollable on mobile or switch to card view
+- KPI cards, charts, and grids: stack vertically on small screens
+- Test on 375px (iPhone SE) and 390px (iPhone 14) viewport widths
+- **Owner note:** Primary use is 1280px+ desktop — mobile is secondary but should not break
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
