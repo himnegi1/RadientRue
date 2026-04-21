@@ -49,6 +49,36 @@ The web dashboard does not display properly on mobile screen sizes — layout us
 
 ---
 
+### #5 — 12-Hour Time Format Everywhere
+All timestamps displayed in the app (mobile) and web dashboard should use 12-hour format (e.g. 3:45 PM, not 15:45).
+- Web: Service Log time column, Settlement timestamps, any other date-time display
+- Mobile: Service entry timestamps, login/logout times, any time shown to staff
+- Use a shared formatter utility (e.g. `formatTime(date)`) so the format is changed in one place
+- Do not affect stored values — only the display layer changes
+
+---
+
+### #6 — Staff Advances + Monthly Settlement View
+Track cash advances given to staff for daily needs or emergencies; deduct from monthly settlement.
+
+**Advance tracking:**
+- Add an "Advances" section (web, Settlement tab or dedicated sub-section)
+- Record: staff name, amount, date, optional note (e.g. "emergency", "travel")
+- Store in Supabase `staff_advances` table: `id, staff_id, amount, date, note, settled_at, created_at`
+- Advances reset (mark as settled) on the 10th of each month, same as monthly salary payout
+
+**Settlement tab — two views:**
+- Toggle: **Weekly** (existing, Tue→Mon) | **Monthly** (new, 1st→10th payout cycle)
+- Weekly view: unchanged — Target + Tips + Product commission + Overtime
+- Monthly view: Salary (from `monthly_salary`) + Total advances given this month → Net payable = Salary − Advances
+- Monthly view resets on the 10th; "current cycle" = last 10th → today
+
+**Mobile app:**
+- No advance entry on mobile — owner records advances from web only
+- No changes needed to service logging flow
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
