@@ -91,6 +91,28 @@ The revenue trend graph on the Dashboard tab always shows only the last 7 days r
 
 ---
 
+### #8 — Staff Notes Section (Web)
+Admin can write private notes against each staff member to track incidents, reminders, or follow-up actions (e.g. "came late on 23 Apr — discuss if repeated", "warned about attitude").
+
+**Where:** Staff tab — each staff card (or staff detail view) gets a "Notes" section below the scorecard.
+
+**Features:**
+- Add a note: free-text input + timestamp auto-stamped on save
+- Notes listed newest-first under the staff card
+- Delete individual note (with a confirmation prompt)
+- Notes are admin-only — staff do not see them (no mobile exposure)
+
+**Storage:**
+- Supabase table `staff_notes`: `id, staff_id, note TEXT, created_at TIMESTAMPTZ`
+- No edit — only add + delete (keeps a clean audit trail; if wrong, delete and re-add)
+
+**Use cases the owner described:**
+- Late arrivals to follow up on
+- Repeated behaviour to track before taking strict action
+- Any general reminder tied to a specific staff member
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
