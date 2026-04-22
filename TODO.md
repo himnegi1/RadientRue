@@ -79,6 +79,18 @@ Track cash advances given to staff for daily needs or emergencies; deduct from m
 
 ---
 
+### #7 — Dashboard Revenue Graph Respects Selected Timeframe (Web)
+The revenue trend graph on the Dashboard tab always shows only the last 7 days regardless of which period filter the admin selects.
+- Graph data must update in sync with the period filter (Today / This Week / This Month / All Time)
+- **Today** → single day, bars by hour (or one bar if sparse)
+- **This Week** → 7 days, one bar per day (current behaviour — already correct)
+- **This Month** → ~30 days, one bar per day
+- **All Time** → group by week or month to keep X-axis readable
+- X-axis labels should adapt per period (day names for week, dates for month, week/month labels for all time)
+- No schema or storage changes needed — filter/display logic only (web)
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
