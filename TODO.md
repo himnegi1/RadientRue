@@ -113,6 +113,24 @@ Admin can write private notes against each staff member to track incidents, remi
 
 ---
 
+### #9 — Celebration Effect on Target Hit / Tip Received (Mobile)
+Show a fun celebration animation to boost staff morale when they hit a milestone during the day.
+
+**Triggers:**
+- Staff completes their daily target (revenue ≥ target threshold) → big celebration
+- Staff receives a tip → smaller celebration
+
+**Implementation:**
+- Use `react-native-confetti-cannon` or `lottie-react-native` (Lottie animation) for the effect
+- Show a full-screen burst (confetti / fireworks) for 2–3 seconds with a congratulations message
+  - Target hit → "🎯 Target Complete! Great work [Name]!" + confetti
+  - Tip received → "💰 You got a tip! Keep it up!" + smaller burst
+- Auto-dismiss after animation ends — no tap needed
+- Only shown to the staff member on their own device (not a broadcast)
+- Should not interrupt service logging flow — trigger after the record is saved
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
