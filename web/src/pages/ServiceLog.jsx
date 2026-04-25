@@ -49,6 +49,7 @@ export default function ServiceLog() {
         setActiveStaffList(staff)
         setForm(f => ({ ...f, date: getISTDate(), staff_name: staff[0]?.name ?? '' }))
         setHasDisabled(recs.some(r => !names.has(r.staff_name)))
+        setSelectedStaff(prev => (prev !== 'all' && !names.has(prev) ? 'all' : prev))
         const uniqueNames = [...new Set(recs.map(r => r.staff_name))].sort()
         setAllStaffNames(uniqueNames)
       } catch (err) {
@@ -283,9 +284,11 @@ export default function ServiceLog() {
           className="bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-sm px-3 py-2 rounded-md"
         >
           <option value="all">All Staff</option>
-          {allStaffNames.map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
+          {allStaffNames
+            .filter(name => showDisabled || activeNames.has(name))
+            .map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
         </select>
 
         <div className="flex gap-2">
