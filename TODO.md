@@ -131,6 +131,34 @@ Show a fun celebration animation to boost staff morale when they hit a milestone
 
 ---
 
+### #10 — Telegram Notifications to Owners Group (Real-time)
+Both owners get an instant Telegram message whenever staff log a service, tip, or product via the app.
+
+**Setup (one-time):**
+- Create a Telegram group → add both owners
+- Create a Telegram Bot via @BotFather → get bot token
+- Add the bot to the group → get the group chat ID
+- Store `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in Supabase Edge Function secrets
+
+**How it works:**
+- Staff logs entry (mobile app) → Supabase inserts into `service_records`
+- Supabase Database Webhook fires on INSERT → calls Edge Function
+- Edge Function sends message to Telegram group via Bot API
+
+**Message format:**
+```
+📌 Azad logged a service
+💰 ₹500 · Paytm
+🕐 3:45 PM · 23 Apr
+```
+- Tips → 💰 prefix, Products → 🛍️ prefix, Services → ✂️ prefix
+
+**Cost:** 100% free — Telegram Bot API has no limits or approval process
+
+**Effort:** ~2 hours total (no waiting, no approvals)
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
