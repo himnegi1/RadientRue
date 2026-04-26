@@ -131,7 +131,7 @@ Show a fun celebration animation to boost staff morale when they hit a milestone
 
 ---
 
-### #10 — Telegram Notifications to Owners Group (Real-time)
+### ✅ #10 — Telegram Notifications to Owners Group (Real-time)
 Both owners get an instant Telegram message whenever staff log a service, tip, or product via the app.
 
 **Setup (one-time):**
@@ -173,3 +173,4 @@ Both owners get an instant Telegram message whenever staff log a service, tip, o
 - Admin email/password login on mobile app
 - Play Store production build (versionCode 10/11)
 - Netlify deploy switched to CLI (`--dir=dist`) — no build minutes used
+- Telegram group notifications on service/tip/product log (Supabase Edge Function + DB trigger)
