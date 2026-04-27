@@ -159,6 +159,41 @@ Both owners get an instant Telegram message whenever staff log a service, tip, o
 
 ---
 
+### #11 — Telegram Daily Reports at 11:50 PM (Automated)
+Two automated reports sent to the Telegram group every night at 11:50 PM IST via Supabase cron + Edge Function.
+
+**Report 1 — Daily Summary**
+```
+📊 Daily Summary · 27 Apr
+
+👣 Total Walk-ins   : 18
+💵 Total Sales      : ₹8,450
+🛍️ Products Sold    : 3
+```
+- **Walk-ins** = COUNT of `entry_type = 'service'` only (tips/products excluded — those customers already walked in for a service)
+- **Total Sales** = SUM of amount where `entry_type IN ('service', 'product')` — tips excluded
+- **Products Sold** = COUNT of `entry_type = 'product'`
+
+**Report 2 — Staff Performance**
+```
+👥 Staff Performance · 27 Apr
+
+✂️ Azad      ₹3,200  (12 services)
+✂️ Akram     ₹2,750  (10 services)
+✂️ Sawan     ₹2,500  (9 services)
+```
+- Per staff: name + total sales (services + products, tips excluded) + service count
+- Sorted highest to lowest
+- Only shows staff who logged at least one entry today
+
+**Technical:**
+- Cron schedule: `20 18 * * *` (UTC) = 11:50 PM IST daily
+- New Edge Function `telegram-daily-report` queries Supabase DB for today's records
+- Uses Supabase `pg_cron` or Dashboard cron scheduler to trigger at fixed time
+- Same Telegram group (C&B notification)
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
