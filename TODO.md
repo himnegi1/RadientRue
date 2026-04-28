@@ -159,7 +159,7 @@ Both owners get an instant Telegram message whenever staff log a service, tip, o
 
 ---
 
-### #11 — Telegram Daily Reports at 11:50 PM (Automated)
+### ✅ #11 — Telegram Daily Reports at 11:50 PM (Automated)
 Two automated reports sent to the Telegram group every night at 11:50 PM IST via Supabase cron + Edge Function.
 
 **Report 1 — Daily Summary**
@@ -209,3 +209,4 @@ Two automated reports sent to the Telegram group every night at 11:50 PM IST via
 - Play Store production build (versionCode 10/11)
 - Netlify deploy switched to CLI (`--dir=dist`) — no build minutes used
 - Telegram group notifications on service/tip/product log (Supabase Edge Function + DB trigger)
+- Telegram daily reports at 11:50 PM IST — Daily Summary + Staff Performance (pg_cron)
