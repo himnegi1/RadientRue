@@ -194,6 +194,40 @@ Two automated reports sent to the Telegram group every night at 11:50 PM IST via
 
 ---
 
+### #12 — Billing / POS View + Service & Product Catalog (Web)
+A counter-facing billing screen where the manager selects services and products, sees the total, and logs the entry — all in one flow.
+
+**Part A — Services Catalog**
+- Admin can create/edit/delete services with name + price (e.g. Haircut ₹200, Shave ₹100, Facial ₹500)
+- Stored in Supabase `services` table: `id, name, price, active, created_at`
+- Managed from Settings tab → "Services" section
+
+**Part B — Product Inventory**
+- Admin can add products with name, price, and stock quantity (e.g. Hair Serum ₹350, qty: 12)
+- Stock decrements automatically when a product is billed
+- Low stock alert (optional — flag when qty < threshold)
+- Stored in Supabase `products` table: `id, name, price, stock_qty, active, created_at`
+- Managed from Settings tab → "Products" section
+
+**Part C — Billing / POS Screen (new tab or modal)**
+- Manager opens billing screen at the counter when customer comes to pay
+- Select staff who performed the service
+- Tap to add services from the catalog (pre-filled prices, editable)
+- Tap to add products purchased
+- Running total shown live at the bottom
+- Select payment method: Cash / Paytm
+- Hit "Confirm & Log" → automatically creates `service_records` entries (one per line item) + decrements product stock
+- No need to manually add entries from the Service Log — billing does it
+
+**Supabase tables needed:**
+```sql
+CREATE TABLE services (id UUID PRIMARY KEY, name TEXT, price NUMERIC, active BOOLEAN, created_at TIMESTAMPTZ);
+CREATE TABLE products  (id UUID PRIMARY KEY, name TEXT, price NUMERIC, stock_qty INT, active BOOLEAN, created_at TIMESTAMPTZ);
+```
+- `service_records` table stays unchanged — billing just writes to it like the app does today
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
