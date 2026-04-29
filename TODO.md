@@ -194,37 +194,60 @@ Two automated reports sent to the Telegram group every night at 11:50 PM IST via
 
 ---
 
-### #12 — Billing / POS View + Service & Product Catalog (Web)
-A counter-facing billing screen where the manager selects services and products, sees the total, and logs the entry — all in one flow.
+### #12 — Phase 1: Services Catalog (Web — Settings)
+Foundation for billing. Admin defines all salon services with prices.
 
-**Part A — Services Catalog**
-- Admin can create/edit/delete services with name + price (e.g. Haircut ₹200, Shave ₹100, Facial ₹500)
-- Stored in Supabase `services` table: `id, name, price, active, created_at`
-- Managed from Settings tab → "Services" section
+- New Supabase table: `services (id, name, price, active, created_at)`
+- Settings tab → new "Services" section
+- Add service: name + price input → Save
+- Edit price inline
+- Toggle active/inactive (inactive services won't appear in billing screen)
+- Preload common services on first setup (Haircut, Shave, Facial, etc. — admin can edit)
+- **No app changes needed**
 
-**Part B — Product Inventory**
-- Admin can add products with name, price, and stock quantity (e.g. Hair Serum ₹350, qty: 12)
-- Stock decrements automatically when a product is billed
-- Low stock alert (optional — flag when qty < threshold)
-- Stored in Supabase `products` table: `id, name, price, stock_qty, active, created_at`
-- Managed from Settings tab → "Products" section
+---
 
-**Part C — Billing / POS Screen (new tab or modal)**
-- Manager opens billing screen at the counter when customer comes to pay
-- Select staff who performed the service
-- Tap to add services from the catalog (pre-filled prices, editable)
-- Tap to add products purchased
-- Running total shown live at the bottom
-- Select payment method: Cash / Paytm
-- Hit "Confirm & Log" → automatically creates `service_records` entries (one per line item) + decrements product stock
-- No need to manually add entries from the Service Log — billing does it
+### #13 — Phase 2: Product Inventory (Web — Settings)
+Admin manages salon products available for sale with stock tracking.
 
-**Supabase tables needed:**
-```sql
-CREATE TABLE services (id UUID PRIMARY KEY, name TEXT, price NUMERIC, active BOOLEAN, created_at TIMESTAMPTZ);
-CREATE TABLE products  (id UUID PRIMARY KEY, name TEXT, price NUMERIC, stock_qty INT, active BOOLEAN, created_at TIMESTAMPTZ);
-```
-- `service_records` table stays unchanged — billing just writes to it like the app does today
+- New Supabase table: `products (id, name, price, stock_qty, active, created_at)`
+- Settings tab → new "Products" section
+- Add product: name + price + initial stock qty → Save
+- Edit price and stock inline
+- Stock count shown per product — admin can manually adjust (restock)
+- Toggle active/inactive
+- ⚠️ Low stock badge when `stock_qty ≤ 3` (configurable later)
+- **No app changes needed**
+
+---
+
+### #14 — Phase 3: Billing / POS Screen (Web — new tab)
+Counter-facing billing screen. Manager builds the bill, sees total, logs everything in one tap.
+
+**Flow:**
+1. Open "Billing" tab → fresh bill
+2. Select staff who did the service
+3. Tap services from catalog → added to bill (price editable per line)
+4. Tap products if customer is buying any → added to bill
+5. Live total updates at bottom
+6. Select payment: Cash / Paytm
+7. Hit **"Confirm & Bill"** →
+   - Creates one `service_records` entry per service line
+   - Creates one `service_records` entry per product line (entry_type: product)
+   - Decrements `stock_qty` in `products` table for each product billed
+   - Clears the bill for next customer
+- `service_records` table unchanged — billing writes to it exactly like the app does today
+- **No app changes needed**
+
+---
+
+### #15 — Phase 4: Billing Polish & History
+Nice-to-haves after core billing works.
+
+- **Bill history** — list of past bills (grouped by date, shows items + total + payment type)
+- **Print / share bill** — simple printable receipt or WhatsApp-shareable text summary
+- **Low stock Telegram alert** — when any product stock hits ≤ 3, send alert to Telegram group
+- **Billing in daily report** — include product revenue separately in 11:50 PM Telegram report
 
 ---
 
