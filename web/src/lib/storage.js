@@ -101,7 +101,13 @@ export async function getAllStaff() {
 }
 
 export async function addStaff(name, phone) {
-  const pin = String(Math.floor(1000 + Math.random() * 9000))
+  // Generate a unique 4-digit PIN — retry until no collision
+  let pin
+  while (true) {
+    pin = String(Math.floor(1000 + Math.random() * 9000))
+    const { data } = await supabase.from('staff').select('id').eq('pin', pin).maybeSingle()
+    if (!data) break // PIN is free, use it
+  }
   const { data, error } = await supabase
     .from('staff')
     .insert({ name, phone, pin })
