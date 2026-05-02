@@ -251,6 +251,18 @@ Nice-to-haves after core billing works.
 
 ---
 
+### #13 — Show "Account Disabled" on Login (Mobile)
+Currently the DB trigger blocks disabled staff from saving entries, but the app doesn't know why it failed — staff get a confusing error message instead of a clear explanation.
+
+**Fix:**
+- On app startup / login, check `active` flag from Supabase `staff` table
+- If `active = false` → show "Your account has been disabled. Contact the owner." and block the app
+- Staff cannot reach the service logging screen at all
+- No data risk — DB trigger already handles enforcement; this is UX only
+- Include in next Play Store release (no need for a dedicated release just for this)
+
+---
+
 ## ✅ Completed
 
 - Dark/light theme with OS detection (web)
